@@ -1,0 +1,12 @@
+# ninja log v5
+176	932	8113568062351015	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	6043340fc5b257f
+935	1883	8113568071858723	C:/Unity/Thermo-Tactics-Greybox/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4c1a5k37/obj/arm64-v8a/libswappywrapper.so	c70a6d51722459b2
+79	10824	8113568158845841	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	892e898917883af5
+156	12722	8113568176726092	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	89c56883cbbbee8d
+62	12725	8113568179689462	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	1af9aa827c668b33
+104	12924	8113568176220479	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	a75f93263627876a
+1	12928	8113568176675198	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	3f2e4116d93d0122
+138	12931	8113568180434847	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	4ad9dde45fa8abbc
+121	13030	8113568182874211	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	8ca848771f349369
+46	13117	8113568182669185	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	546d57cd8cd98e8a
+13118	15893	8113568211728922	C:/Unity/Thermo-Tactics-Greybox/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4c1a5k37/obj/arm64-v8a/libgame.so	bf7bbd99e9c0a40d
