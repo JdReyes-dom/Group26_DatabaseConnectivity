@@ -8,7 +8,7 @@
 - [Jherwin Reyes] — Game Logic Developer
 - [Jon Francis Gellido] — Database Developer
 - [Rodge Emmanuel Ramos] — UI & Testing Lead
-- [Edx Bedirico] — Documentation Lead
+- [Edz Bedirico] — Documentation Lead
 
 ## Description
 A 2D tower-defense prototype built in Unity 6 LTS. The player deploys up to 5 unit types across 6 lanes to defend a Climate Bar from incoming enemy waves. Oxygen is the resource, decreasing each turn. The player wins by clearing 3 waves and loses if the Climate Bar reaches 6. On Game Over, the run is saved to a local SQLite database and displayed in an in-game leaderboard.
