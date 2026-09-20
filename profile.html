@@ -1,0 +1,3575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TIMAWA - My Profile</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --theme-primary: #1089d3;
+            --theme-accent: #12b1d1;
+            --theme-primary-dark: #0c6ca8;
+            --theme-primary-soft: #e0f2fe;
+            --theme-primary-soft-2: #f0f7ff;
+            --theme-bg: #ffffff;
+            --theme-bg-soft: #f8faff;
+            --theme-card: #ffffff;
+            --theme-text: #1a1a2e;
+            --theme-text-muted: #555;
+            --theme-text-dim: #888;
+            --theme-text-faint: #aaa;
+            --theme-border: #eef2f7;
+            --theme-border-soft: #f0f4ff;
+            --theme-border-input: #e0e7ff;
+            --theme-gradient: linear-gradient(45deg, #1089d3 0%, #12b1d1 100%);
+            --theme-shadow: rgba(133, 189, 215, 0.15);
+            --theme-shadow-soft: #cff0ff;
+            --theme-nav-bg: rgba(255, 255, 255, 0.98);
+            --theme-danger: #ef4444;
+            --theme-danger-soft: #fee2e2;
+            --theme-success: #16a34a;
+            --theme-success-soft: #dcfce7;
+            --theme-warn: #d97706;
+            --theme-warn-soft: #fef3c7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            min-height: 100vh;
+            background: var(--theme-bg);
+            color: var(--theme-text);
+            line-height: 1.6;
+            transition: background 0.4s ease, color 0.4s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* ================================================================
+           ===== BACKGROUND LAYERS =====
+           ================================================================ */
+        .theme-bg-base {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -3;
+            background: var(--theme-bg);
+            transition: background 0.6s ease;
+            pointer-events: none;
+        }
+
+        /* Starry special: always dark night base */
+        [data-timawa-theme="starry"] .theme-bg-base {
+            background: linear-gradient(180deg, #1a1340 0%, #2a1a5e 50%, #1a1340 100%);
+        }
+        [data-timawa-theme="starry"][data-timawa-mode="dark"] .theme-bg-base {
+            background: linear-gradient(180deg, #06040e 0%, #100828 50%, #06040e 100%);
+        }
+
+        .theme-bg-shapes {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .theme-bg-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 20% 30%, color-mix(in srgb, var(--theme-primary) 5%, transparent) 0%, transparent 70%),
+                        radial-gradient(ellipse at 80% 70%, color-mix(in srgb, var(--theme-accent) 5%, transparent) 0%, transparent 70%);
+            transition: background 0.6s ease;
+        }
+
+        /* ================================================================
+           ===== SHAPE BASE =====
+           Each shape has its own class with self-contained styling.
+           Shapes are injected by JS based on active theme.
+           ================================================================ */
+        .theme-bg-shapes .shape {
+            position: absolute;
+            pointer-events: none;
+            will-change: transform, opacity;
+        }
+
+        /* -------- OCEAN -------- */
+        .ocean-wave {
+            width: 200%;
+            height: 180px;
+            left: -50%;
+            bottom: -30px;
+            border-radius: 45%;
+            background: var(--theme-primary);
+            opacity: 0.10;
+            animation: oceanWave 18s ease-in-out infinite;
+        }
+        .ocean-wave.w2 {
+            bottom: -60px;
+            height: 220px;
+            opacity: 0.07;
+            background: var(--theme-accent);
+            animation-duration: 24s;
+            animation-direction: reverse;
+        }
+        .ocean-bubble {
+            border-radius: 50%;
+            border: 2px solid var(--theme-primary);
+            background: transparent;
+            opacity: 0.15;
+            animation: oceanBubble 22s linear infinite;
+        }
+        .ocean-bubble.b1 { width: 60px; height: 60px; left: 10%; bottom: -80px; }
+        .ocean-bubble.b2 { width: 40px; height: 40px; left: 30%; bottom: -60px; animation-delay: 5s; }
+        .ocean-bubble.b3 { width: 80px; height: 80px; left: 70%; bottom: -100px; animation-delay: 10s; }
+        .ocean-bubble.b4 { width: 30px; height: 30px; left: 85%; bottom: -40px; animation-delay: 15s; }
+        .ocean-fish {
+            width: 50px;
+            height: 25px;
+            background: var(--theme-primary);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            opacity: 0.10;
+            animation: oceanFish 35s linear infinite;
+        }
+        .ocean-fish::before {
+            content: '';
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            border-left: 15px solid var(--theme-primary);
+        }
+        .ocean-fish.f1 { top: 20%; left: -80px; }
+        .ocean-fish.f2 { top: 65%; left: -100px; animation-duration: 45s; animation-delay: 8s; }
+
+        @keyframes oceanWave {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-4%) rotate(2deg); }
+            75% { transform: translateX(4%) rotate(-2deg); }
+        }
+        @keyframes oceanBubble {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            10% { opacity: 0.6; }
+            100% { transform: translateY(-110vh) scale(1.3); opacity: 0; }
+        }
+        @keyframes oceanFish {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(100vw + 200px)); }
+        }
+
+        /* -------- SUNSET -------- */
+        .sunset-ray {
+            top: -20%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            opacity: 0.10;
+            background: conic-gradient(from 0deg at 50% 50%,
+                transparent 0deg, var(--theme-primary) 20deg, transparent 40deg,
+                var(--theme-accent) 70deg, transparent 100deg,
+                var(--theme-primary) 130deg, transparent 160deg,
+                var(--theme-accent) 190deg, transparent 220deg,
+                var(--theme-primary) 250deg, transparent 280deg,
+                var(--theme-accent) 310deg, transparent 340deg, transparent 360deg);
+            transform: translate(-50%, -50%);
+            animation: sunsetRay 80s linear infinite;
+        }
+        .sunset-glow {
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--theme-primary) 0%, transparent 70%);
+            filter: blur(40px);
+            opacity: 0.12;
+            animation: sunsetGlow 10s ease-in-out infinite;
+        }
+        .sunset-glow.g1 { width: 400px; height: 400px; top: 10%; right: -100px; }
+        .sunset-glow.g2 { width: 300px; height: 300px; bottom: 20%; left: -80px; animation-delay: 4s; }
+        .sunset-cloud {
+            width: 180px;
+            height: 50px;
+            background: var(--theme-accent);
+            border-radius: 50px;
+            filter: blur(20px);
+            opacity: 0.10;
+            animation: sunsetCloud 40s linear infinite;
+        }
+        .sunset-cloud.c1 { top: 30%; left: -200px; }
+        .sunset-cloud.c2 { top: 60%; left: -250px; animation-delay: 15s; width: 220px; height: 60px; }
+
+        @keyframes sunsetRay {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes sunsetGlow {
+            0%, 100% { transform: scale(1); opacity: 0.08; }
+            50% { transform: scale(1.2); opacity: 0.18; }
+        }
+        @keyframes sunsetCloud {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(100vw + 300px)); }
+        }
+
+        /* -------- BLOSSOM -------- */
+        .petal {
+            width: 28px;
+            height: 28px;
+            background: var(--theme-primary);
+            border-radius: 50% 0 50% 0;
+            opacity: 0.22;
+            animation: petalFall 18s linear infinite;
+        }
+        .petal.p1 { left: 10%; top: -10%; width: 22px; height: 22px; }
+        .petal.p2 { left: 25%; top: -15%; animation-delay: 3s; width: 30px; height: 30px; }
+        .petal.p3 { left: 45%; top: -8%; animation-delay: 6s; width: 20px; height: 20px; }
+        .petal.p4 { left: 65%; top: -12%; animation-delay: 2s; width: 26px; height: 26px; }
+        .petal.p5 { left: 82%; top: -6%; animation-delay: 8s; width: 24px; height: 24px; }
+        .petal.p6 { left: 50%; top: -20%; animation-delay: 10s; width: 18px; height: 18px; }
+        .blossom {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 30% 30%, var(--theme-accent), var(--theme-primary));
+            border-radius: 50%;
+            filter: blur(15px);
+            opacity: 0.14;
+            animation: blossomFloat 25s ease-in-out infinite;
+        }
+        .blossom.b1 { top: 20%; left: 5%; }
+        .blossom.b2 { top: 70%; left: 85%; animation-delay: 8s; width: 80px; height: 80px; }
+        .blossom.b3 { top: 45%; left: 50%; animation-delay: 16s; width: 50px; height: 50px; }
+
+        @keyframes petalFall {
+            0% { transform: translateY(0) rotate(45deg) scale(1); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(110vh) rotate(405deg) scale(0.8); opacity: 0; }
+        }
+        @keyframes blossomFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.08; }
+            50% { transform: translate(20px, -30px) scale(1.1); opacity: 0.18; }
+        }
+
+        /* -------- FOREST -------- */
+        .leaf {
+            width: 40px;
+            height: 40px;
+            background: var(--theme-primary);
+            border-radius: 0 100% 0 100%;
+            opacity: 0.18;
+            animation: leafFloat 22s ease-in-out infinite;
+        }
+        .leaf.l1 { left: 5%; top: 10%; transform: rotate(15deg); width: 50px; height: 50px; }
+        .leaf.l2 { left: 80%; top: 15%; animation-delay: 4s; transform: rotate(-30deg); width: 35px; height: 35px; }
+        .leaf.l3 { left: 20%; top: 65%; animation-delay: 8s; transform: rotate(45deg); width: 45px; height: 45px; }
+        .leaf.l4 { left: 70%; top: 70%; animation-delay: 3s; transform: rotate(-15deg); width: 30px; height: 30px; }
+        .leaf.l5 { left: 45%; top: 45%; animation-delay: 12s; transform: rotate(75deg); width: 38px; height: 38px; }
+        .fern {
+            width: 100px;
+            height: 100px;
+            border: 2px solid var(--theme-accent);
+            border-radius: 0 100% 0 100%;
+            filter: blur(8px);
+            opacity: 0.12;
+            animation: fernSway 30s ease-in-out infinite;
+        }
+        .fern.f1 { top: 10%; right: 10%; transform: rotate(45deg); }
+        .fern.f2 { bottom: 15%; left: 5%; animation-delay: 10s; transform: rotate(-30deg); width: 140px; height: 140px; }
+
+        @keyframes leafFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(15px, -20px) rotate(10deg); }
+            50% { transform: translate(-10px, -10px) rotate(-5deg); }
+            75% { transform: translate(5px, -25px) rotate(8deg); }
+        }
+        @keyframes fernSway {
+            0%, 100% { transform: rotate(45deg) scale(1); opacity: 0.08; }
+            50% { transform: rotate(55deg) scale(1.1); opacity: 0.18; }
+        }
+
+        /* -------- SUNSHINE -------- */
+        .sunbeam {
+            width: 140px;
+            height: 120%;
+            top: -10%;
+            background: linear-gradient(to bottom, var(--theme-primary), transparent);
+            transform: rotate(25deg);
+            filter: blur(25px);
+            opacity: 0.12;
+            animation: sunbeamShimmer 12s ease-in-out infinite;
+        }
+        .sunbeam.s1 { left: 5%; }
+        .sunbeam.s2 { left: 35%; animation-delay: 3s; width: 90px; }
+        .sunbeam.s3 { left: 65%; animation-delay: 6s; width: 170px; }
+        .sunbeam.s4 { left: 85%; animation-delay: 9s; width: 70px; }
+        .sun-dot {
+            border-radius: 50%;
+            background: var(--theme-primary);
+            filter: blur(1.5px);
+            opacity: 0.20;
+            animation: sunDotFloat 14s ease-in-out infinite;
+        }
+        .sun-dot.d1 { width: 14px; height: 14px; left: 15%; top: 20%; }
+        .sun-dot.d2 { width: 20px; height: 20px; left: 70%; top: 40%; animation-delay: 4s; }
+        .sun-dot.d3 { width: 10px; height: 10px; left: 40%; top: 75%; animation-delay: 7s; }
+        .sun-dot.d4 { width: 16px; height: 16px; left: 88%; top: 60%; animation-delay: 2s; }
+        .sun-ring {
+            border-radius: 50%;
+            border: 3px solid var(--theme-accent);
+            filter: blur(4px);
+            opacity: 0.10;
+            animation: sunRingPulse 8s ease-in-out infinite;
+        }
+        .sun-ring.r1 { width: 200px; height: 200px; top: 10%; left: 30%; }
+        .sun-ring.r2 { width: 150px; height: 150px; bottom: 20%; right: 15%; animation-delay: 4s; }
+
+        @keyframes sunbeamShimmer {
+            0%, 100% { opacity: 0.06; transform: rotate(25deg) scaleX(1); }
+            50% { opacity: 0.18; transform: rotate(25deg) scaleX(1.3); }
+        }
+        @keyframes sunDotFloat {
+            0%, 100% { transform: translate(0, 0); opacity: 0.10; }
+            50% { transform: translate(-10px, -15px); opacity: 0.28; }
+        }
+        @keyframes sunRingPulse {
+            0%, 100% { transform: scale(1); opacity: 0.05; }
+            50% { transform: scale(1.15); opacity: 0.16; }
+        }
+
+/* -------- STARRY (STATIC-FIRST, CHEAP) -------- */
+
+        /* Layer 1: dense small stars — static background, no animation */
+        .starfield {
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.85;
+            background-image:
+                radial-gradient(1px 1px at 10% 20%, #fff, transparent),
+                radial-gradient(1px 1px at 25% 45%, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 40% 10%, #fff, transparent),
+                radial-gradient(1px 1px at 55% 70%, #fff, transparent),
+                radial-gradient(1.2px 1.2px at 70% 30%, #fff, transparent),
+                radial-gradient(1px 1px at 85% 55%, #fff, transparent),
+                radial-gradient(1.8px 1.8px at 15% 80%, #fff, transparent),
+                radial-gradient(1px 1px at 60% 90%, #fff, transparent),
+                radial-gradient(1.3px 1.3px at 90% 10%, #fff, transparent),
+                radial-gradient(1px 1px at 5% 50%, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 48% 35%, #fff, transparent),
+                radial-gradient(1px 1px at 78% 85%, #fff, transparent),
+                radial-gradient(1px 1px at 33% 60%, #fff, transparent),
+                radial-gradient(1.2px 1.2px at 92% 75%, #fff, transparent),
+                radial-gradient(1px 1px at 8% 95%, #fff, transparent),
+                radial-gradient(1.6px 1.6px at 68% 50%, #fff, transparent),
+                radial-gradient(1px 1px at 50% 15%, #fff, transparent),
+                radial-gradient(1.1px 1.1px at 22% 5%, #fff, transparent),
+                radial-gradient(1px 1px at 75% 5%, #fff, transparent),
+                radial-gradient(1.4px 1.4px at 42% 82%, #fff, transparent);
+            background-size: 200px 200px;
+            background-repeat: repeat;
+            /* NO animation — static pattern is virtually free */
+        }
+        /* Layer 2: sparse brighter stars, also static */
+        .starfield-2 {
+            background-size: 340px 340px;
+            background-position: 50px 80px;
+            opacity: 0.55;
+        }
+
+        /* Shooting stars: keep them but slow + only 1 at a time feels alive */
+        .shooting-star {
+            width: 3px; height: 3px; background: #fff; border-radius: 50%;
+            box-shadow: 0 0 6px 1px rgba(255,255,255,0.6);
+            opacity: 0;
+            animation: shoot 14s ease-in infinite;
+            will-change: transform, opacity;
+        }
+        .shooting-star::after {
+            content: ''; position: absolute; top: 50%; right: 100%;
+            width: 60px; height: 1px;
+            background: linear-gradient(to left, rgba(255,255,255,0.7), transparent);
+            transform: translateY(-50%);
+        }
+        .shooting-star.sh1 { top: 14%; left: 80%; animation-delay: 2s; }
+        .shooting-star.sh2 { top: 48%; left: 85%; animation-delay: 9s; animation-duration: 16s; }
+
+        /* Nebula: NO blur filter. Use radial-gradient falloff instead. */
+        /* radial-gradient with transparent stop = soft edge, free of blur cost */
+        .nebula {
+            border-radius: 50%;
+            opacity: 0.30;
+            /* subtle pulse only on opacity (cheap) — no scale, no blur */
+            animation: nebulaPulse 20s ease-in-out infinite;
+            will-change: opacity;
+        }
+        .nebula.n1 {
+            width: 520px; height: 520px; top: -12%; right: -18%;
+            background: radial-gradient(circle,
+                rgba(109, 40, 217, 0.55) 0%,
+                rgba(109, 40, 217, 0.25) 30%,
+                rgba(109, 40, 217, 0.08) 55%,
+                transparent 75%);
+        }
+        .nebula.n2 {
+            width: 440px; height: 440px; bottom: -12%; left: -12%;
+            background: radial-gradient(circle,
+                rgba(196, 181, 253, 0.45) 0%,
+                rgba(196, 181, 253, 0.20) 30%,
+                rgba(196, 181, 253, 0.06) 55%,
+                transparent 75%);
+            animation-delay: 7s;
+        }
+
+        @keyframes shoot {
+            0%   { transform: translate(0, 0) rotate(-35deg); opacity: 0; }
+            4%   { opacity: 1; }
+            16%  { transform: translate(-260px, 170px) rotate(-35deg); opacity: 0; }
+            100% { transform: translate(-260px, 170px) rotate(-35deg); opacity: 0; }
+        }
+        /* Opacity-only pulse — GPU cheap, no re-raster, no blur recompute */
+        @keyframes nebulaPulse {
+            0%, 100% { opacity: 0.22; }
+            50%      { opacity: 0.38; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            [data-timawa-theme="starry"] .shooting-star,
+            [data-timawa-theme="starry"] .nebula {
+                animation: none !important;
+            }
+            [data-timawa-theme="starry"] .shooting-star { display: none; }
+        }
+
+        /* -------- CAFÉ -------- */
+        .coffee-ring {
+            border-radius: 50%;
+            border: 3px solid var(--theme-primary);
+            background: transparent;
+            opacity: 0.14;
+            animation: coffeeRingFloat 20s ease-in-out infinite;
+        }
+        .coffee-ring.cr1 { width: 140px; height: 140px; top: 15%; left: 10%; }
+        .coffee-ring.cr2 { width: 90px; height: 90px; top: 60%; left: 70%; animation-delay: 4s; }
+        .coffee-ring.cr3 { width: 200px; height: 200px; top: 40%; left: 45%; animation-delay: 8s; }
+        .coffee-ring.cr4 { width: 70px; height: 70px; top: 80%; left: 20%; animation-delay: 12s; }
+        .bean {
+            width: 30px;
+            height: 22px;
+            background: var(--theme-primary);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            opacity: 0.16;
+            transform: rotate(-20deg);
+            animation: beanFloat 24s ease-in-out infinite;
+        }
+        .bean::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 60%;
+            background: var(--theme-bg);
+            border-radius: 2px;
+            opacity: 0.4;
+        }
+        .bean.bn1 { top: 25%; left: 85%; transform: rotate(15deg); }
+        .bean.bn2 { top: 70%; left: 5%; animation-delay: 6s; transform: rotate(-40deg); width: 26px; height: 19px; }
+        .bean.bn3 { top: 50%; left: 50%; animation-delay: 12s; transform: rotate(70deg); width: 34px; height: 25px; }
+        .bean.bn4 { top: 10%; left: 40%; animation-delay: 18s; transform: rotate(-10deg); width: 22px; height: 16px; }
+        .steam {
+            width: 60px;
+            height: 120px;
+            background: linear-gradient(to top, var(--theme-accent), transparent);
+            border-radius: 50px;
+            filter: blur(15px);
+            opacity: 0.12;
+            animation: steamRise 10s ease-in-out infinite;
+        }
+        .steam.st1 { bottom: 10%; left: 30%; }
+        .steam.st2 { bottom: 15%; right: 25%; animation-delay: 5s; width: 80px; }
+
+        @keyframes coffeeRingFloat {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(10deg); }
+        }
+        @keyframes beanFloat {
+            0%, 100% { transform: translate(0, 0) rotate(-20deg); }
+            25% { transform: translate(10px, -15px) rotate(0deg); }
+            50% { transform: translate(-8px, -8px) rotate(-30deg); }
+            75% { transform: translate(5px, -20px) rotate(-10deg); }
+        }
+        @keyframes steamRise {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.06; }
+            50% { transform: translateY(-30px) scale(1.2); opacity: 0.18; }
+        }
+
+        /* -------- CRIMSON -------- */
+        .crimson-orb {
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--theme-primary), transparent);
+            filter: blur(30px);
+            opacity: 0.18;
+            animation: crimsonOrb 16s ease-in-out infinite;
+        }
+        .crimson-orb.o1 { width: 250px; height: 250px; top: 10%; right: 5%; }
+        .crimson-orb.o2 { width: 180px; height: 180px; bottom: 15%; left: 8%; animation-delay: 5s; }
+        .crimson-orb.o3 { width: 300px; height: 300px; top: 50%; left: 50%; animation-delay: 10s; }
+        .crimson-streak {
+            width: 3px;
+            height: 120px;
+            background: linear-gradient(to bottom, var(--theme-primary), transparent);
+            border-radius: 3px;
+            opacity: 0.14;
+            transform: rotate(35deg);
+            animation: crimsonStreak 8s ease-in-out infinite;
+        }
+        .crimson-streak.cs1 { top: 10%; left: 25%; }
+        .crimson-streak.cs2 { top: 40%; left: 70%; animation-delay: 3s; height: 160px; }
+        .crimson-streak.cs3 { top: 70%; left: 45%; animation-delay: 6s; height: 100px; }
+        .crimson-diamond {
+            width: 40px;
+            height: 40px;
+            background: var(--theme-accent);
+            transform: rotate(45deg);
+            filter: blur(2px);
+            opacity: 0.12;
+            animation: crimsonDiamond 20s ease-in-out infinite;
+        }
+        .crimson-diamond.cd1 { top: 20%; left: 60%; }
+        .crimson-diamond.cd2 { top: 75%; left: 15%; animation-delay: 8s; width: 30px; height: 30px; }
+        .crimson-diamond.cd3 { top: 55%; right: 10%; animation-delay: 14s; width: 50px; height: 50px; }
+
+        @keyframes crimsonOrb {
+            0%, 100% { transform: scale(1); opacity: 0.12; }
+            50% { transform: scale(1.2); opacity: 0.24; }
+        }
+        @keyframes crimsonStreak {
+            0%, 100% { transform: rotate(35deg) scaleY(1); opacity: 0.08; }
+            50% { transform: rotate(35deg) scaleY(1.3); opacity: 0.22; }
+        }
+        @keyframes crimsonDiamond {
+            0%, 100% { transform: rotate(45deg) scale(1); opacity: 0.08; }
+            50% { transform: rotate(405deg) scale(1.2); opacity: 0.18; }
+        }
+
+        /* -------- MAROON -------- */
+        .maroon-blob {
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            background: var(--theme-primary);
+            filter: blur(25px);
+            opacity: 0.18;
+            animation: maroonBlob 22s ease-in-out infinite;
+        }
+        .maroon-blob.mb1 { width: 300px; height: 300px; top: -5%; left: -5%; }
+        .maroon-blob.mb2 { width: 250px; height: 250px; bottom: 5%; right: -5%; animation-delay: 7s; }
+        .maroon-blob.mb3 { width: 200px; height: 200px; top: 40%; left: 50%; animation-delay: 14s; }
+        .maroon-ring {
+            border-radius: 50%;
+            border: 4px solid var(--theme-accent);
+            opacity: 0.14;
+            animation: maroonRing 18s ease-in-out infinite;
+        }
+        .maroon-ring.mr1 { width: 180px; height: 180px; top: 25%; right: 15%; }
+        .maroon-ring.mr2 { width: 120px; height: 120px; bottom: 25%; left: 20%; animation-delay: 6s; }
+        .maroon-ring.mr3 { width: 220px; height: 220px; top: 60%; left: 70%; animation-delay: 12s; }
+        .maroon-triangle {
+            width: 0;
+            height: 0;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-bottom: 40px solid var(--theme-primary);
+            filter: blur(3px);
+            opacity: 0.10;
+            animation: maroonTriangle 20s ease-in-out infinite;
+        }
+        .maroon-triangle.mt1 { top: 15%; left: 40%; transform: rotate(15deg); }
+        .maroon-triangle.mt2 { top: 70%; left: 60%; animation-delay: 10s; transform: rotate(-25deg); border-left-width: 18px; border-right-width: 18px; border-bottom-width: 30px; }
+        .maroon-triangle.mt3 { top: 50%; left: 10%; animation-delay: 5s; transform: rotate(45deg); border-left-width: 20px; border-right-width: 20px; border-bottom-width: 35px; }
+
+        @keyframes maroonBlob {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.10; }
+            50% { transform: translate(20px, -20px) scale(1.15) rotate(20deg); opacity: 0.22; }
+        }
+        @keyframes maroonRing {
+            0%, 100% { transform: scale(1); opacity: 0.06; }
+            50% { transform: scale(1.2); opacity: 0.18; }
+        }
+        @keyframes maroonTriangle {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.05; }
+            50% { transform: rotate(30deg) scale(1.2); opacity: 0.16; }
+        }
+
+        /* ========== NAVBAR ========== */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 14px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--theme-nav-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--theme-border);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+            flex-wrap: wrap;
+        }
+        .navbar .logo {
+            font-size: 26px; font-weight: 900;
+            color: var(--theme-primary);
+            letter-spacing: 2px; text-decoration: none; flex-shrink: 0;
+        }
+        .navbar .logo span {
+            background: var(--theme-gradient);
+            padding: 2px 10px; border-radius: 8px;
+            font-size: 10px; color: white; margin-left: 8px;
+        }
+        .navbar .nav-links {
+            display: flex; align-items: center; gap: 12px;
+            list-style: none; flex-wrap: wrap;
+        }
+        .navbar .nav-links a {
+            text-decoration: none; color: var(--theme-text-muted);
+            font-weight: 500; font-size: 13px;
+            transition: all 0.3s ease; padding: 6px 12px;
+            border-radius: 8px; white-space: nowrap;
+        }
+        .navbar .nav-links a:hover {
+            color: var(--theme-primary);
+            background: color-mix(in srgb, var(--theme-primary) 6%, transparent);
+        }
+        .navbar .nav-links a.active {
+            color: var(--theme-primary);
+            background: color-mix(in srgb, var(--theme-primary) 8%, transparent);
+        }
+        .navbar .nav-links .profile-link { color: var(--theme-primary); font-weight: 600; }
+        .navbar .nav-links .logout-btn {
+            background: var(--theme-bg); border: 2px solid var(--theme-danger-soft);
+            color: var(--theme-danger); padding: 6px 14px; border-radius: 50px;
+            cursor: pointer; transition: all 0.3s ease;
+            font-size: 12px; font-weight: 600; font-family: inherit;
+        }
+        .navbar .nav-links .logout-btn:hover {
+            background: var(--theme-danger-soft); transform: scale(1.03);
+        }
+        .navbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .navbar-mobile-bell { display: none; position: relative; }
+        .navbar-mobile-bell .announcement-bell { width: 42px; height: 42px; font-size: 17px; }
+        .navbar .mobile-toggle {
+            display: none; font-size: 24px; color: var(--theme-primary);
+            cursor: pointer; background: none; border: none; padding: 4px 8px;
+        }
+
+        /* Announcement bell */
+        .announcement-wrapper { display: flex; align-items: center; }
+        .announcement-bell {
+            position: relative; width: 40px; height: 40px;
+            border-radius: 50%; border: none;
+            background: var(--theme-primary-soft-2);
+            color: var(--theme-primary);
+            font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.25s ease; font-family: inherit; flex-shrink: 0;
+        }
+        .announcement-bell:hover { background: var(--theme-primary-soft); transform: scale(1.05); }
+        .announcement-bell.active {
+            background: var(--theme-gradient); color: white;
+            box-shadow: 0 4px 15px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+        }
+        .announcement-bell.has-new { animation: bellPulse 2s ease-in-out infinite; }
+        @keyframes bellPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        .announcement-badge {
+            position: absolute; top: -4px; right: -4px;
+            min-width: 20px; height: 20px; padding: 0 6px;
+            border-radius: 50px; background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white; font-size: 10px; font-weight: 800;
+            display: none; align-items: center; justify-content: center;
+            border: 2px solid var(--theme-card); box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+        }
+        .announcement-badge.show { display: flex; }
+
+        /* Announcement popup */
+        .announcement-popup {
+            position: fixed; width: 380px;
+            max-width: calc(100vw - 40px);
+            background: var(--theme-card); border-radius: 20px;
+            box-shadow: 0 20px 60px color-mix(in srgb, var(--theme-primary) 22%, transparent), 0 0 0 1px color-mix(in srgb, var(--theme-primary) 6%, transparent);
+            overflow: hidden; z-index: 2000; opacity: 0;
+            transform: translateY(-8px) scale(0.97);
+            pointer-events: none;
+            transition: all 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-origin: top right;
+            color: var(--theme-text);
+        }
+        .announcement-popup.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .announcement-popup::before {
+            content: ''; position: absolute; top: -6px; right: 22px;
+            width: 12px; height: 12px; background: var(--theme-card);
+            transform: rotate(45deg);
+        }
+        .announcement-popup-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 18px;
+            background: linear-gradient(135deg,
+                color-mix(in srgb, var(--theme-primary) 8%, var(--theme-card)) 0%,
+                color-mix(in srgb, var(--theme-primary) 14%, var(--theme-card)) 100%);
+            border-bottom: 1px solid var(--theme-border);
+        }
+        .announcement-popup-header h4 {
+            font-size: 15px; font-weight: 800;
+            color: var(--theme-text);
+            display: flex; align-items: center; gap: 8px; margin: 0;
+        }
+        .announcement-popup-header h4 i { color: var(--theme-primary); }
+        .announcement-mark-all {
+            background: none; border: none; color: var(--theme-primary);
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            padding: 4px 10px; border-radius: 50px;
+            transition: all 0.2s ease; font-family: inherit;
+        }
+        .announcement-mark-all:hover {
+            background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+        }
+        .announcement-list { max-height: 420px; overflow-y: auto; padding: 6px; }
+        .announcement-item {
+            display: flex; gap: 12px; padding: 12px 14px;
+            border-radius: 14px; cursor: pointer;
+            transition: all 0.2s ease; position: relative;
+            margin-bottom: 4px; background: var(--theme-card);
+        }
+        .announcement-item:hover {
+            background: var(--theme-primary-soft-2); transform: translateX(2px);
+        }
+        .announcement-item.unread { background: var(--theme-primary-soft-2); }
+        .announcement-item.unread:hover { background: var(--theme-primary-soft); }
+        .announcement-item.unread .announcement-title { font-weight: 700; }
+        .announcement-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+            background: var(--theme-primary-soft);
+        }
+        .announcement-icon.type-admin { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); }
+        .announcement-icon.type-birthday { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); }
+        .announcement-icon.type-event { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
+        .announcement-icon.type-highlight { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); }
+        .announcement-icon.type-member { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); }
+        .announcement-icon.type-reply { background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%); }
+        .announcement-icon.type-mention { background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); }
+        .announcement-body { flex: 1; min-width: 0; }
+        .announcement-title {
+            font-size: 13px; font-weight: 600; color: var(--theme-text);
+            line-height: 1.35; margin-bottom: 2px;
+            display: flex; align-items: center; gap: 6px;
+            flex-wrap: wrap; overflow-wrap: anywhere;
+        }
+        .announcement-priority-badge {
+            font-size: 9px; font-weight: 800; padding: 1px 7px;
+            border-radius: 50px; letter-spacing: 0.4px; text-transform: uppercase;
+        }
+        .announcement-priority-badge.urgent { background: #fee2e2; color: #dc2626; }
+        .announcement-priority-badge.info { background: #dbeafe; color: #2563eb; }
+        .announcement-message {
+            font-size: 12px; color: var(--theme-text-muted);
+            line-height: 1.45; display: -webkit-box;
+            -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden; overflow-wrap: anywhere;
+        }
+        .announcement-time { font-size: 11px; color: var(--theme-text-faint); margin-top: 3px; }
+        .announcement-unread-dot {
+            position: absolute; top: 14px; right: 14px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--theme-primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 18%, transparent);
+        }
+        .announcement-popup-footer {
+            padding: 10px 18px; background: var(--theme-bg-soft);
+            border-top: 1px solid var(--theme-border);
+            text-align: center; font-size: 11px;
+            color: var(--theme-text-dim); font-weight: 600;
+        }
+        .announcement-empty {
+            text-align: center; padding: 40px 20px;
+            color: var(--theme-text-faint);
+        }
+        .announcement-empty i {
+            font-size: 36px; color: var(--theme-primary-soft);
+            display: block; margin-bottom: 10px;
+        }
+        .announcement-empty p { font-size: 13px; }
+
+        /* Announcement view modal */
+        .announcement-view-modal {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+            z-index: 2100; justify-content: center; align-items: center; padding: 20px;
+        }
+        .announcement-view-modal.active { display: flex; }
+        .announcement-view-modal .modal-content {
+            background: var(--theme-card); border-radius: 24px; padding: 0;
+            max-width: 540px; width: 100%; max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 70px color-mix(in srgb, var(--theme-primary) 35%, transparent);
+            animation: annModalPop 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            color: var(--theme-text);
+        }
+        @keyframes annModalPop {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .announcement-view-header {
+            position: relative; padding: 30px 30px 22px;
+            background: var(--theme-gradient);
+            border-radius: 24px 24px 0 0;
+            text-align: center; overflow: hidden;
+        }
+        .announcement-view-header::before {
+            content: ''; position: absolute; top: -50px; right: -50px;
+            width: 160px; height: 160px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15); pointer-events: none;
+        }
+        .announcement-view-header::after {
+            content: ''; position: absolute; bottom: -70px; left: -70px;
+            width: 180px; height: 180px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1); pointer-events: none;
+        }
+        .announcement-view-close {
+            position: absolute; top: 14px; right: 14px;
+            width: 38px; height: 38px; border-radius: 50%;
+            background: rgba(255,255,255,0.22); border: none;
+            color: white; font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.25s ease; z-index: 2;
+        }
+        .announcement-view-close:hover { background: rgba(255,255,255,0.4); transform: rotate(90deg); }
+        .announcement-view-icon {
+            width: 80px; height: 80px; border-radius: 22px;
+            background: var(--theme-card);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 38px; margin: 0 auto 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            position: relative; z-index: 1;
+        }
+        .announcement-view-type {
+            display: inline-block; background: rgba(255, 255, 255, 0.25);
+            color: white; font-size: 11px; font-weight: 700;
+            padding: 4px 14px; border-radius: 50px;
+            letter-spacing: 0.6px; text-transform: uppercase;
+            position: relative; z-index: 1;
+        }
+        .announcement-view-body { padding: 26px 30px 30px; }
+        .announcement-view-priority {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 50px;
+            font-size: 11px; font-weight: 800;
+            letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 14px;
+        }
+        .announcement-view-priority.urgent { background: #fee2e2; color: #dc2626; }
+        .announcement-view-priority.info { background: #dbeafe; color: #2563eb; }
+        .announcement-view-title {
+            font-size: 22px; font-weight: 800; color: var(--theme-text);
+            line-height: 1.3; margin-bottom: 14px; overflow-wrap: anywhere;
+        }
+        .announcement-view-message {
+            font-size: 15px; color: var(--theme-text-muted);
+            line-height: 1.7; padding: 18px 20px;
+            background: var(--theme-bg-soft); border-radius: 16px;
+            border-left: 4px solid var(--theme-primary);
+            margin-bottom: 18px; white-space: pre-wrap; word-break: break-word;
+        }
+        .announcement-view-meta {
+            display: flex; flex-wrap: wrap; gap: 14px;
+            font-size: 12px; color: var(--theme-text-dim);
+            padding-top: 16px; border-top: 1px solid var(--theme-border-soft);
+            margin-bottom: 20px;
+        }
+        .announcement-view-meta span { display: inline-flex; align-items: center; gap: 6px; }
+        .announcement-view-meta i { color: var(--theme-primary); font-size: 11px; }
+        .announcement-view-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .announcement-view-actions button,
+        .announcement-view-actions a {
+            flex: 1; min-width: 140px; padding: 13px 22px;
+            border-radius: 14px; border: none;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px; font-family: inherit; text-decoration: none;
+        }
+        .announcement-view-actions .ann-view-primary {
+            background: var(--theme-gradient); color: white;
+            box-shadow: 0 4px 15px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+        }
+        .announcement-view-actions .ann-view-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 25px color-mix(in srgb, var(--theme-primary) 45%, transparent);
+        }
+        .announcement-view-actions .ann-view-secondary {
+            background: var(--theme-bg-soft); color: var(--theme-text-muted);
+        }
+        .announcement-view-actions .ann-view-secondary:hover { background: var(--theme-primary-soft); }
+
+        /* Profile layout */
+        .profile-layout {
+            padding: 130px 40px 60px;
+            max-width: 1280px; margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(320px, 1fr) minmax(0, 1.35fr);
+            gap: 48px; align-items: start;
+            position: relative;
+            z-index: 1;
+        }
+        .profile-left {
+            position: sticky; top: 110px;
+            display: flex; flex-direction: column;
+            gap: 26px; align-items: center; min-width: 0;
+        }
+        .hero-content {
+            width: 100%; max-width: 420px;
+            text-align: center; min-width: 0;
+        }
+        .hero-content h1 {
+            font-size: 38px; font-weight: 800; line-height: 1.15;
+            color: var(--theme-text); margin-bottom: 10px; overflow-wrap: anywhere;
+        }
+        .hero-content .subtitle {
+            font-size: 16px; color: var(--theme-primary);
+            font-weight: 600; margin-bottom: 12px;
+        }
+        .hero-content .intro-text {
+            font-size: 15px; color: var(--theme-text-muted);
+            margin-bottom: 18px; line-height: 1.7;
+        }
+        .hero-content .intro-text .highlight {
+            background: var(--theme-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text; font-weight: 600;
+        }
+        .hero-content .bio-tags {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+        }
+        .hero-content .bio-tag {
+            background: var(--theme-primary-soft);
+            padding: 6px 16px; border-radius: 50px;
+            font-size: 13px; color: var(--theme-primary); font-weight: 600;
+        }
+        .profile-card {
+            width: 100%; max-width: 380px;
+            background: var(--theme-card); border-radius: 30px;
+            padding: 28px; text-align: center;
+            box-shadow: 0 20px 50px -15px var(--theme-shadow);
+            border: 2px solid var(--theme-border-soft);
+            transition: all 0.3s ease; margin: 0 auto; min-width: 0;
+        }
+        .profile-card:hover {
+            border-color: var(--theme-primary); transform: translateY(-5px);
+        }
+        .profile-card .profile-avatar {
+            width: 140px; height: 140px; border-radius: 50%;
+            margin: 0 auto 15px;
+            background: linear-gradient(135deg,
+                var(--theme-primary-soft) 0%,
+                color-mix(in srgb, var(--theme-primary) 30%, var(--theme-primary-soft)) 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 60px; color: var(--theme-primary);
+            border: 4px solid var(--theme-card);
+            box-shadow: 0 10px 30px -10px var(--theme-shadow);
+            overflow: hidden; position: relative;
+        }
+        .profile-card .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-card .profile-avatar .photo-upload-btn-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: all 0.3s ease;
+            border-radius: 50%; cursor: pointer;
+        }
+        .profile-card .profile-avatar:hover .photo-upload-btn-overlay { opacity: 1; }
+        .profile-card .profile-avatar .photo-upload-btn-overlay i { color: white; font-size: 28px; }
+        .profile-card .profile-avatar .photo-upload-btn-overlay input[type="file"] { display: none; }
+        .profile-card h3 { font-size: 22px; font-weight: 700; color: var(--theme-text); overflow-wrap: anywhere; }
+        .profile-card .role { color: var(--theme-primary); font-weight: 600; font-size: 13px; margin-bottom: 8px; overflow-wrap: anywhere; }
+        .profile-card .mini-bio { color: var(--theme-text-muted); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+        .status-badge {
+            display: inline-block; padding: 4px 14px;
+            border-radius: 50px; font-size: 12px;
+            font-weight: 600; margin-top: 8px;
+        }
+        .status-badge.available { background: #dcfce7; color: #16a34a; }
+        .status-badge.busy { background: #fee2e2; color: #dc2626; }
+        .status-badge.away { background: #fef3c7; color: #d97706; }
+        .status-badge.dnd { background: #f3e8ff; color: #7c3aed; }
+        .lovelife-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 14px; border-radius: 50px;
+            font-size: 12px; font-weight: 700;
+            margin-top: 6px; margin-left: 6px;
+        }
+        .lovelife-badge.single { background: #fee2e2; color: #dc2626; }
+        .lovelife-badge.mu { background: #fce7f3; color: #db2777; }
+        .lovelife-badge.married { background: #dcfce7; color: #16a34a; }
+        .lovelife-badge.notset { background: var(--theme-bg-soft); color: var(--theme-text-faint); }
+
+        /* Form */
+        .profile-section { min-width: 0; }
+        .profile-section .section-header { margin-bottom: 24px; }
+        .profile-section .section-header .title { font-size: 28px; font-weight: 800; color: var(--theme-text); }
+        .profile-section .section-header .title .highlight {
+            background: var(--theme-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .profile-section .section-header p { color: var(--theme-text-dim); font-size: 14px; margin-top: 5px; }
+        .profile-form {
+            display: flex; flex-direction: column; gap: 18px;
+            background: var(--theme-card); padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 8px 15px -6px var(--theme-shadow-soft);
+            border: 2px solid var(--theme-border-soft);
+        }
+        .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .form-group label {
+            font-weight: 600; color: var(--theme-text-muted);
+            font-size: 13px; display: flex; align-items: center; gap: 8px;
+        }
+        .form-group label i { color: var(--theme-primary); width: 18px; }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 12px 16px; border-radius: 15px;
+            border: 2px solid var(--theme-border-input);
+            background: var(--theme-bg-soft);
+            font-size: 14px; transition: all 0.3s ease;
+            font-family: inherit; color: var(--theme-text); min-width: 0;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none; border-color: var(--theme-primary);
+            box-shadow: 0 0 0 3px var(--theme-primary-soft);
+        }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .form-group .helper-text { font-size: 12px; color: var(--theme-text-faint); margin-top: 3px; }
+        .form-group input:disabled { background: var(--theme-bg-soft); cursor: not-allowed; opacity: 0.7; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        /* Appearance */
+        .appearance-section {
+            background: linear-gradient(135deg,
+                color-mix(in srgb, var(--theme-primary) 6%, var(--theme-card)) 0%,
+                color-mix(in srgb, var(--theme-primary) 12%, var(--theme-card)) 100%);
+            border-radius: 22px;
+            padding: 24px 24px 22px;
+            border: 2px solid color-mix(in srgb, var(--theme-primary) 20%, transparent);
+            margin-top: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+        .appearance-section::before {
+            content: '';
+            position: absolute; top: -40px; right: -40px;
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            background: color-mix(in srgb, var(--theme-primary) 8%, transparent);
+            pointer-events: none;
+        }
+        .appearance-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 18px; flex-wrap: wrap;
+            position: relative; z-index: 1;
+        }
+        .appearance-header .icon-wrap {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: var(--theme-gradient);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 18px;
+            box-shadow: 0 6px 18px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            flex-shrink: 0;
+        }
+        .appearance-header .title-block { flex: 1; min-width: 0; }
+        .appearance-header h3 {
+            font-size: 17px; font-weight: 800;
+            color: var(--theme-text); margin: 0;
+            letter-spacing: -0.2px;
+        }
+        .appearance-header p { font-size: 12px; color: var(--theme-text-dim); margin: 2px 0 0; font-weight: 500; }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+            position: relative; z-index: 1;
+        }
+        .theme-preset {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 10px 12px;
+            border-radius: 16px;
+            background: var(--theme-card);
+            border: 2px solid var(--theme-border-input);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            font-family: inherit;
+            text-align: center;
+            overflow: hidden;
+        }
+        .theme-preset:hover {
+            transform: translateY(-3px);
+            border-color: var(--theme-primary);
+            box-shadow: 0 10px 25px color-mix(in srgb, var(--theme-primary) 22%, transparent);
+        }
+        .theme-preset.active {
+            border-color: var(--theme-primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 18%, transparent),
+                        0 8px 20px color-mix(in srgb, var(--theme-primary) 18%, transparent);
+        }
+        .theme-preset.active::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 8px; right: 8px;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: var(--theme-gradient);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px;
+            box-shadow: 0 4px 10px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+            animation: presetCheckPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes presetCheckPop {
+            0% { transform: scale(0) rotate(-45deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .theme-preset .preview {
+            width: 100%;
+            height: 62px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        .theme-preset:hover .preview { transform: scale(1.04); }
+        .theme-preset .preview::before {
+            content: '';
+            position: absolute;
+            top: 8px; left: 8px; right: 8px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.35);
+        }
+        .theme-preset .preview::after {
+            content: '';
+            position: absolute;
+            bottom: 8px; left: 8px;
+            width: 44%; height: 26px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.55);
+            box-shadow: -1px 1px 3px rgba(0,0,0,0.08);
+        }
+        .theme-preset .preset-name {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--theme-text-muted);
+            letter-spacing: 0.2px;
+            transition: color 0.2s ease;
+        }
+        .theme-preset.active .preset-name { color: var(--theme-primary); }
+        .theme-preset .preset-sub {
+            font-size: 9px;
+            color: var(--theme-text-faint);
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            margin-top: -4px;
+        }
+
+        .mode-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--theme-card);
+            border-radius: 16px;
+            border: 2px solid var(--theme-border-input);
+            position: relative; z-index: 1;
+        }
+        .mode-row .mode-label {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13px; font-weight: 700;
+            color: var(--theme-text-muted);
+        }
+        .mode-row .mode-label i { color: var(--theme-primary); font-size: 15px; }
+        .mode-toggle {
+            display: inline-flex;
+            background: var(--theme-bg-soft);
+            padding: 4px;
+            border-radius: 50px;
+            gap: 3px;
+            position: relative;
+            border: 1px solid var(--theme-border);
+        }
+        .mode-toggle .mode-btn {
+            padding: 7px 16px;
+            border-radius: 50px;
+            border: none;
+            background: transparent;
+            color: var(--theme-text-muted);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.25s ease;
+            font-family: inherit;
+            white-space: nowrap;
+            position: relative;
+            z-index: 1;
+        }
+        .mode-toggle .mode-btn:hover { color: var(--theme-primary); }
+        .mode-toggle .mode-btn.active {
+            background: var(--theme-gradient);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-primary) 35%, transparent);
+        }
+
+        /* Messages */
+        .message {
+            padding: 12px 18px; border-radius: 15px;
+            margin-bottom: 15px; display: none;
+            overflow-wrap: anywhere;
+        }
+        .message.success { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; display: block; }
+        .message.error { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+        .message.info { background: #dbeafe; color: #2563eb; border: 1px solid #bfdbfe; display: block; }
+
+        .progress-container {
+            display: none; margin: 10px 0; width: 100%;
+            background: var(--theme-border-soft);
+            border-radius: 50px; overflow: hidden; height: 8px;
+        }
+        .progress-container.active { display: block; }
+        .progress-bar {
+            height: 100%; background: var(--theme-gradient);
+            width: 0%; border-radius: 50px; transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 12px; color: var(--theme-text-dim);
+            text-align: center; margin-top: 5px; display: none;
+        }
+        .progress-text.active { display: block; }
+
+        .form-actions { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+        .btn-primary {
+            padding: 14px 35px; border-radius: 50px; border: none;
+            background: var(--theme-gradient); color: white;
+            font-weight: 600; cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px -8px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+            font-size: 15px;
+            display: inline-flex; align-items: center; gap: 8px;
+            font-family: inherit;
+        }
+        .btn-primary:hover {
+            transform: scale(1.03);
+            box-shadow: 0 15px 25px -10px color-mix(in srgb, var(--theme-primary) 50%, transparent);
+        }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        .btn-secondary {
+            padding: 14px 35px; border-radius: 50px;
+            border: 2px solid var(--theme-border-input);
+            background: var(--theme-card); color: var(--theme-text-muted);
+            font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+            font-size: 15px;
+            display: inline-flex; align-items: center; gap: 8px;
+            font-family: inherit;
+        }
+        .btn-secondary:hover {
+            border-color: var(--theme-primary);
+            color: var(--theme-primary); transform: scale(1.03);
+        }
+        .spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%; border-top-color: #fff;
+            animation: spin 0.8s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .footer {
+            padding: 40px; text-align: center;
+            color: var(--theme-text-dim); font-size: 14px;
+            border-top: 2px solid var(--theme-border-soft);
+            background: var(--theme-card); margin-top: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .footer p { color: var(--theme-text-dim); }
+
+        /* Save confirmation */
+        .save-confirm-modal {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(8px);
+            z-index: 3000; justify-content: center; align-items: center; padding: 20px;
+        }
+        .save-confirm-modal.active { display: flex; }
+        .save-confirm-modal .save-confirm-content {
+            background: var(--theme-card); border-radius: 28px;
+            padding: 36px 30px 30px;
+            max-width: 400px; width: 100%;
+            text-align: center;
+            box-shadow: 0 30px 80px color-mix(in srgb, var(--theme-primary) 35%, transparent);
+            animation: savePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; overflow: hidden;
+            color: var(--theme-text);
+        }
+        @keyframes savePop {
+            from { transform: scale(0.85) translateY(30px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .save-confirm-modal .save-confirm-content::before {
+            content: ''; position: absolute;
+            top: -60px; right: -60px;
+            width: 140px; height: 140px; border-radius: 50%;
+            background: color-mix(in srgb, var(--theme-primary) 8%, transparent);
+            pointer-events: none;
+        }
+        .save-confirm-icon-wrap {
+            width: 90px; height: 90px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px; font-size: 42px;
+            position: relative; z-index: 1;
+            animation: iconBounce 0.6s ease;
+        }
+        @keyframes iconBounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        .save-confirm-icon-wrap.success { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #16a34a; }
+        .save-confirm-icon-wrap.info { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #2563eb; }
+        .save-confirm-icon-wrap.warn { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #d97706; }
+        .save-confirm-title { font-size: 22px; font-weight: 800; color: var(--theme-text); margin-bottom: 8px; position: relative; z-index: 1; }
+        .save-confirm-message { font-size: 14px; color: var(--theme-text-muted); line-height: 1.6; margin-bottom: 24px; position: relative; z-index: 1; }
+        .save-confirm-actions { display: flex; gap: 10px; justify-content: center; position: relative; z-index: 1; }
+        .save-confirm-btn {
+            padding: 12px 32px; border-radius: 50px; border: none;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+            transition: all 0.25s ease; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 8px;
+            min-width: 120px; justify-content: center;
+        }
+        .save-confirm-btn.primary {
+            background: var(--theme-gradient); color: white;
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--theme-primary) 35%, transparent);
+        }
+        .save-confirm-btn.primary:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 28px color-mix(in srgb, var(--theme-primary) 50%, transparent);
+        }
+        .save-confirm-close {
+            position: absolute; top: 14px; right: 16px;
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--theme-bg-soft); border: none;
+            color: var(--theme-text-dim); font-size: 14px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.25s ease; z-index: 2;
+        }
+        .save-confirm-close:hover { background: var(--theme-primary-soft); transform: rotate(90deg); }
+
+        @media (max-width: 1024px) {
+            .profile-layout {
+                grid-template-columns: 1fr;
+                padding: 100px 30px 50px;
+                gap: 40px; max-width: 720px;
+            }
+            .profile-left { position: static; order: 1; }
+            .profile-section { order: 2; }
+        }
+        @media (max-width: 768px) {
+            .navbar { padding: 12px 20px; flex-direction: row; gap: 10px; align-items: center; }
+            .navbar .logo { font-size: 22px; }
+            .navbar-mobile-bell { display: block; }
+            .navbar .mobile-toggle { display: block; }
+            .navbar .nav-links > li.announcement-li .announcement-wrapper { display: none; }
+            .navbar .nav-links {
+                display: none; flex-direction: column;
+                position: absolute; top: 100%; left: 0; right: 0;
+                background: var(--theme-card); padding: 20px;
+                border-bottom: 2px solid var(--theme-border-soft);
+                gap: 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.05);
+                width: 100%; max-height: calc(100vh - 60px); overflow-y: auto;
+            }
+            .navbar .nav-links.active { display: flex; }
+            .navbar .nav-links > li { width: 100%; justify-content: center; }
+            .navbar .nav-links > li > a { font-size: 14px; width: 100%; text-align: center; display: block; }
+            .announcement-popup {
+                position: fixed !important;
+                top: 70px !important;
+                left: 14px !important; right: 14px !important;
+                width: auto !important; max-width: none !important;
+            }
+            .announcement-popup::before { display: none; }
+            .announcement-list { max-height: 60vh; }
+            .profile-layout { display: block; padding: 100px 20px 40px; max-width: 100%; }
+            .profile-left { position: static; gap: 20px; margin-bottom: 40px; }
+            .hero-content { max-width: 100%; }
+            .hero-content h1 { font-size: 30px; }
+            .hero-content .subtitle { font-size: 16px; }
+            .hero-content .intro-text { font-size: 15px; }
+            .hero-content .bio-tags { justify-content: center; }
+            .profile-card { max-width: 340px; padding: 22px; }
+            .form-row { grid-template-columns: 1fr; }
+            .form-actions { flex-direction: column; }
+            .form-actions button { width: 100%; justify-content: center; }
+            .profile-form { padding: 20px; }
+            .profile-section .section-header .title { font-size: 24px; }
+            .navbar .nav-links a { font-size: 14px; width: 100%; text-align: center; }
+            .navbar .nav-links .logout-btn { width: 100%; justify-content: center; }
+            .announcement-view-modal .modal-content { max-width: calc(100vw - 24px); max-height: 94vh; }
+            .announcement-view-header { padding: 24px 22px 18px; }
+            .announcement-view-icon { width: 64px; height: 64px; font-size: 30px; border-radius: 18px; }
+            .announcement-view-body { padding: 20px 22px 24px; }
+            .announcement-view-title { font-size: 19px; }
+            .announcement-view-message { font-size: 14px; padding: 14px 16px; }
+            .announcement-view-actions { flex-direction: column; }
+            .announcement-view-actions button,
+            .announcement-view-actions a { width: 100%; min-width: 0; }
+            .save-confirm-modal .save-confirm-content { padding: 28px 22px 24px; }
+            .save-confirm-title { font-size: 19px; }
+            .save-confirm-message { font-size: 13px; }
+            .save-confirm-btn { padding: 11px 24px; font-size: 13px; min-width: 100px; }
+            .theme-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .theme-preset { padding: 10px 6px 9px; gap: 7px; }
+            .theme-preset .preview { height: 52px; }
+            .theme-preset .preset-name { font-size: 10px; }
+            .theme-preset .preset-sub { font-size: 8px; }
+            .appearance-section { padding: 18px 16px 16px; }
+            .mode-row { padding: 10px 12px; flex-wrap: wrap; }
+            .mode-toggle { width: 100%; justify-content: space-between; }
+            .mode-toggle .mode-btn { flex: 1; justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .profile-layout { padding: 90px 16px 30px; }
+            .hero-content h1 { font-size: 26px; }
+            .profile-card .profile-avatar { width: 120px; height: 120px; font-size: 50px; }
+            .profile-card { padding: 20px; }
+            .profile-form { padding: 15px; }
+            .navbar .nav-links a { font-size: 16px; padding: 8px 16px; }
+            .navbar .nav-links .logout-btn { font-size: 14px; padding: 8px 16px; }
+            .announcement-popup { top: 65px !important; left: 10px !important; right: 10px !important; }
+            .announcement-view-header { padding: 20px 18px 16px; }
+            .announcement-view-icon { width: 56px; height: 56px; font-size: 26px; }
+            .announcement-view-body { padding: 18px 18px 22px; }
+            .announcement-view-title { font-size: 17px; }
+            .theme-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+            .theme-preset { padding: 8px 4px 7px; gap: 6px; border-radius: 12px; }
+            .theme-preset .preview { height: 44px; border-radius: 9px; }
+            .theme-preset .preview::before { top: 6px; left: 6px; right: 6px; height: 5px; }
+            .theme-preset .preview::after { bottom: 6px; left: 6px; width: 45%; height: 20px; border-radius: 6px; }
+            .theme-preset .preset-name { font-size: 9px; }
+            .theme-preset .preset-sub { display: none; }
+            .theme-preset.active::after { width: 18px; height: 18px; font-size: 8px; top: 5px; right: 5px; }
+            .appearance-header h3 { font-size: 15px; }
+            .appearance-header p { font-size: 11px; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--theme-border-soft); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--theme-gradient); border-radius: 10px; }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px; cursor: pointer;
+        }
+        select option { padding: 8px; }
+
+        .custom-location-input { display: none; margin-top: 8px; }
+        .custom-location-input.active { display: block; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .theme-bg-shapes .shape,
+            .theme-bg-shapes .shape * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* ================================================================
+        ===== THEME CHANGE TOAST =====
+        Appears briefly when user picks a new theme preset or mode.
+        ================================================================ */
+        .theme-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--theme-gradient);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+            max-width: calc(100vw - 40px);
+        }
+
+        .theme-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .theme-toast i {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 480px) {
+            .theme-toast {
+                bottom: 20px;
+                padding: 10px 20px;
+                font-size: 12px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- ===== BACKGROUND LAYERS ===== -->
+    <div class="theme-bg-base"></div>
+    <div class="theme-bg-shapes" id="themeBgShapes"><!-- Injected by JS --></div>
+    <div class="theme-bg-overlay"></div>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav class="navbar" id="navbar">
+        <a href="index.html" class="logo">TIMAWA <span>PROFILE</span></a>
+
+        <div class="navbar-right">
+            <div class="navbar-mobile-bell">
+                <button class="announcement-bell" id="announcementBellMobile" onclick="toggleAnnouncementPopup(event, 'mobile')" aria-label="Announcements">
+                    <i class="fas fa-bell"></i>
+                    <span class="announcement-badge" id="announcementBadgeMobile">0</span>
+                </button>
+            </div>
+            <button class="mobile-toggle" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+        </div>
+
+        <ul class="nav-links" id="navLinks">
+            <li><a href="index.html#highlights">Highlights</a></li>
+            <li><a href="index.html#coffee-shops">Coffee</a></li>
+            <li><a href="index.html#favorite-places">Places</a></li>
+            <li><a href="index.html#things-to-do">Activities</a></li>
+            <li><a href="index.html#members-section">Members</a></li>
+            <li><a href="calendar.html">Calendar</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="profile.html" class="profile-link active"><i class="fas fa-user"></i> Profile</a></li>
+            <li class="announcement-li">
+                <div class="announcement-wrapper">
+                    <button class="announcement-bell" id="announcementBell" onclick="toggleAnnouncementPopup(event, 'desktop')" aria-label="Announcements">
+                        <i class="fas fa-bell"></i>
+                        <span class="announcement-badge" id="announcementBadge">0</span>
+                    </button>
+                </div>
+            </li>
+            <li><button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button></li>
+        </ul>
+    </nav>
+
+    <div class="announcement-popup" id="announcementPopup" role="dialog" aria-labelledby="announcementTitle" style="display:none;">
+        <div class="announcement-popup-header">
+            <h4 id="announcementTitle"><i class="fas fa-bullhorn"></i> Announcements</h4>
+            <button class="announcement-mark-all" onclick="markAllAnnouncementsRead()">Mark all read</button>
+        </div>
+        <div class="announcement-list" id="announcementList">
+            <div class="announcement-empty">
+                <i class="fas fa-inbox"></i>
+                <p>Loading announcements...</p>
+            </div>
+        </div>
+        <div class="announcement-popup-footer" id="announcementFooter">No new announcements</div>
+    </div>
+
+    <div id="announcementViewModal" class="announcement-view-modal" role="dialog">
+        <div class="modal-content">
+            <div class="announcement-view-header">
+                <button class="announcement-view-close" onclick="closeAnnouncementView()" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="announcement-view-icon" id="annViewIcon">📢</div>
+                <div class="announcement-view-type" id="annViewType">Announcement</div>
+            </div>
+            <div class="announcement-view-body">
+                <div class="announcement-view-priority" id="annViewPriority" style="display:none;"></div>
+                <div class="announcement-view-title" id="annViewTitle">Announcement Title</div>
+                <div class="announcement-view-message" id="annViewMessage">Announcement message...</div>
+                <div class="announcement-view-meta" id="annViewMeta">
+                    <span><i class="fas fa-user"></i> <span id="annViewAuthor">Admin</span></span>
+                    <span><i class="fas fa-clock"></i> <span id="annViewTime">Just now</span></span>
+                </div>
+                <div class="announcement-view-actions">
+                    <a href="#" id="annViewLinkBtn" class="ann-view-primary" style="display:none;">
+                        <i class="fas fa-arrow-right"></i> <span id="annViewLinkLabel">Open</span>
+                    </a>
+                    <button class="ann-view-secondary" onclick="closeAnnouncementView()">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="saveConfirmModal" class="save-confirm-modal" role="dialog">
+        <div class="save-confirm-content">
+            <button class="save-confirm-close" onclick="closeSaveConfirmModal()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="save-confirm-icon-wrap" id="saveConfirmIcon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="save-confirm-title" id="saveConfirmTitle">Information Saved</div>
+            <div class="save-confirm-message" id="saveConfirmMessage">
+                Your profile information has been saved successfully.
+            </div>
+            <div class="save-confirm-actions">
+                <button class="save-confirm-btn primary" onclick="closeSaveConfirmModal()">
+                    <i class="fas fa-check"></i> OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-layout">
+        <aside class="profile-left" id="home">
+            <div class="profile-card">
+                <div class="profile-avatar" id="heroAvatar">
+                    <span id="heroAvatarText">👤</span>
+                    <label class="photo-upload-btn-overlay">
+                        <i class="fas fa-camera"></i>
+                        <input type="file" id="photoInput" accept="image/*" />
+                    </label>
+                </div>
+                <h3 id="heroName">[Your Name]</h3>
+                <div class="role" id="heroRole">🌟 Community Member</div>
+                <p class="mini-bio" id="heroBio">Update your bio to tell the squad about yourself!</p>
+                <div>
+                    <div id="heroStatus" class="status-badge available">
+                        <i class="fas fa-circle"></i> Available
+                    </div>
+                    <div id="heroLoveLife" class="lovelife-badge notset" style="display:none;">
+                        <i class="fas fa-heart-broken"></i> Single
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-content">
+                <div class="subtitle">✏️ Edit Your Profile</div>
+                <h1>Hi, I'm <span class="highlight" id="heroNameDisplay">[Your Name]</span></h1>
+                <p class="intro-text">
+                    This is your personal space. Update your profile to let the squad
+                    know more about you.
+                </p>
+                <div class="bio-tags" id="heroTags">
+                    <span class="bio-tag">🌟 Edit</span>
+                    <span class="bio-tag">✏️ Update</span>
+                    <span class="bio-tag">📸 Photo</span>
+                    <span class="bio-tag">🔗 Connect</span>
+                </div>
+            </div>
+        </aside>
+
+        <section class="profile-section" id="profile">
+            <div class="section-header">
+                <div class="title">
+                    <i class="fas fa-user-edit" style="color: var(--theme-primary); margin-right: 10px;"></i>
+                    Edit Your <span class="highlight">Profile</span>
+                </div>
+                <p>Update your information so the squad can get to know you better.</p>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-text" id="progressText">Uploading: 0%</div>
+
+            <form id="profileForm" class="profile-form">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Display Name</label>
+                    <input type="text" id="displayName" placeholder="Enter your display name" />
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="email" disabled />
+                    <span class="helper-text">Email cannot be changed</span>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-info-circle"></i> Bio / About Me</label>
+                    <textarea id="bio" placeholder="Tell the squad about yourself..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Current Location</label>
+                        <select id="locationSelect" onchange="toggleCustomLocation()">
+                            <option value="">Select your location</option>
+                            <option value="Alabat, Quezon">📍 Alabat, Quezon</option>
+                            <option value="Perez, Quezon">📍 Perez, Quezon</option>
+                            <option value="Atimonan, Quezon">📍 Atimonan, Quezon</option>
+                            <option value="Lucena, Quezon">📍 Lucena, Quezon</option>
+                            <option value="Lucban, Quezon">📍 Lucban, Quezon</option>
+                            <option value="San Pedro, Laguna">📍 San Pedro, Laguna</option>
+                            <option value="Santa Cruz, Laguna">📍 Santa Cruz, Laguna</option>
+                            <option value="custom">✏️ Others (Customize)</option>
+                        </select>
+                        <div class="custom-location-input" id="customLocationInput">
+                            <input type="text" id="customLocation" placeholder="Enter your location..." />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Birthday</label>
+                        <input type="date" id="birthday" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-briefcase"></i> Occupation</label>
+                        <input type="text" id="occupation" placeholder="e.g., Software Engineer" />
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-heart"></i> Interests</label>
+                        <input type="text" id="interests" placeholder="e.g., Gaming, Travel, Coffee" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-circle"></i> Status</label>
+                        <select id="status">
+                            <option value="available">🟢 Available</option>
+                            <option value="busy">🔴 Busy</option>
+                            <option value="away">🟡 Away</option>
+                            <option value="dnd">🟣 Do Not Disturb</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-heart-broken"></i> Love Life</label>
+                        <select id="loveLife">
+                            <option value="">Select your love life status</option>
+                            <option value="Single">💔 Single</option>
+                            <option value="MU">💞 MU (Mutual Understanding)</option>
+                            <option value="Married">💍 Married</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fab fa-instagram"></i> Instagram</label>
+                        <input type="text" id="instagram" placeholder="@username" />
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fab fa-twitter"></i> Twitter / X</label>
+                        <input type="text" id="twitter" placeholder="@username" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fab fa-tiktok"></i> TikTok</label>
+                        <input type="text" id="tiktok" placeholder="@username" />
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fab fa-facebook"></i> Facebook Profile URL</label>
+                        <input type="url" id="facebook" placeholder="https://facebook.com/username" />
+                        <span class="helper-text">Enter your full Facebook profile URL</span>
+                    </div>
+                </div>
+
+                <div class="appearance-section" id="appearanceSection">
+                    <div class="appearance-header">
+                        <div class="icon-wrap"><i class="fas fa-palette"></i></div>
+                        <div class="title-block">
+                            <h3>Appearance</h3>
+                            <p>Choose your vibe — applies to every page, on every device.</p>
+                        </div>
+                    </div>
+                    <div class="theme-grid" id="themeGrid"></div>
+                    <div class="mode-row">
+                        <div class="mode-label">
+                            <i class="fas fa-circle-half-stroke"></i>
+                            <span>Mode</span>
+                        </div>
+                        <div class="mode-toggle" id="modeToggle" role="tablist">
+                            <button type="button" class="mode-btn active" data-mode="light" onclick="setThemeMode('light')">
+                                <i class="fas fa-sun"></i> Light
+                            </button>
+                            <button type="button" class="mode-btn" data-mode="dark" onclick="setThemeMode('dark')">
+                                <i class="fas fa-moon"></i> Dark
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary" id="saveBtn">
+                        <i class="fas fa-save"></i> Save Profile
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="resetForm()">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>Made with ❤️ for the TIMAWA squad &copy; 2022</p>
+    </footer>
+
+    <script>
+        // ================================================================
+        // ===== ★ THEME SYSTEM WITH SHAPE INJECTION =====
+        // ================================================================
+        const THEME_STORAGE_KEY = 'timawa_theme';
+        const THEME_EVENT = 'timawa-theme-change';
+
+        // Shape HTML templates — ONLY the active theme's shapes are injected into DOM
+        const THEME_SHAPES = {
+            ocean: `
+                <div class="shape ocean-wave"></div>
+                <div class="shape ocean-wave w2"></div>
+                <div class="shape ocean-bubble b1"></div>
+                <div class="shape ocean-bubble b2"></div>
+                <div class="shape ocean-bubble b3"></div>
+                <div class="shape ocean-bubble b4"></div>
+                <div class="shape ocean-fish f1"></div>
+                <div class="shape ocean-fish f2"></div>
+            `,
+            sunset: `
+                <div class="shape sunset-ray"></div>
+                <div class="shape sunset-glow g1"></div>
+                <div class="shape sunset-glow g2"></div>
+                <div class="shape sunset-cloud c1"></div>
+                <div class="shape sunset-cloud c2"></div>
+            `,
+            pink: `
+                <div class="shape petal p1"></div>
+                <div class="shape petal p2"></div>
+                <div class="shape petal p3"></div>
+                <div class="shape petal p4"></div>
+                <div class="shape petal p5"></div>
+                <div class="shape petal p6"></div>
+                <div class="shape blossom b1"></div>
+                <div class="shape blossom b2"></div>
+                <div class="shape blossom b3"></div>
+            `,
+            forest: `
+                <div class="shape leaf l1"></div>
+                <div class="shape leaf l2"></div>
+                <div class="shape leaf l3"></div>
+                <div class="shape leaf l4"></div>
+                <div class="shape leaf l5"></div>
+                <div class="shape fern f1"></div>
+                <div class="shape fern f2"></div>
+            `,
+            sunshine: `
+                <div class="shape sunbeam s1"></div>
+                <div class="shape sunbeam s2"></div>
+                <div class="shape sunbeam s3"></div>
+                <div class="shape sunbeam s4"></div>
+                <div class="shape sun-dot d1"></div>
+                <div class="shape sun-dot d2"></div>
+                <div class="shape sun-dot d3"></div>
+                <div class="shape sun-dot d4"></div>
+                <div class="shape sun-ring r1"></div>
+                <div class="shape sun-ring r2"></div>
+            `,
+            starry: `
+                <div class="shape starfield"></div>
+                <div class="shape starfield starfield-2"></div>
+                <div class="shape shooting-star sh1"></div>
+                <div class="shape shooting-star sh2"></div>
+                <div class="shape nebula n1"></div>
+                <div class="shape nebula n2"></div>
+            `,
+            cafe: `
+                <div class="shape coffee-ring cr1"></div>
+                <div class="shape coffee-ring cr2"></div>
+                <div class="shape coffee-ring cr3"></div>
+                <div class="shape coffee-ring cr4"></div>
+                <div class="shape bean bn1"></div>
+                <div class="shape bean bn2"></div>
+                <div class="shape bean bn3"></div>
+                <div class="shape bean bn4"></div>
+                <div class="shape steam st1"></div>
+                <div class="shape steam st2"></div>
+            `,
+            crimson: `
+                <div class="shape crimson-orb o1"></div>
+                <div class="shape crimson-orb o2"></div>
+                <div class="shape crimson-orb o3"></div>
+                <div class="shape crimson-streak cs1"></div>
+                <div class="shape crimson-streak cs2"></div>
+                <div class="shape crimson-streak cs3"></div>
+                <div class="shape crimson-diamond cd1"></div>
+                <div class="shape crimson-diamond cd2"></div>
+                <div class="shape crimson-diamond cd3"></div>
+            `,
+            maroon: `
+                <div class="shape maroon-blob mb1"></div>
+                <div class="shape maroon-blob mb2"></div>
+                <div class="shape maroon-blob mb3"></div>
+                <div class="shape maroon-ring mr1"></div>
+                <div class="shape maroon-ring mr2"></div>
+                <div class="shape maroon-ring mr3"></div>
+                <div class="shape maroon-triangle mt1"></div>
+                <div class="shape maroon-triangle mt2"></div>
+                <div class="shape maroon-triangle mt3"></div>
+            `
+        };
+
+        const THEMES = {
+            ocean: {
+                name: 'Ocean', sub: 'Fresh · Cool', emoji: '🌊',
+                preview: { primary: '#1089d3', gradient: 'linear-gradient(135deg, #1089d3 0%, #12b1d1 100%)' },
+                light: {
+                    '--theme-primary': '#1089d3', '--theme-accent': '#12b1d1', '--theme-primary-dark': '#0c6ca8',
+                    '--theme-primary-soft': '#e0f2fe', '--theme-primary-soft-2': '#f0f7ff',
+                    '--theme-bg': '#ffffff', '--theme-bg-soft': '#f8faff', '--theme-card': '#ffffff',
+                    '--theme-text': '#1a1a2e', '--theme-text-muted': '#555', '--theme-text-dim': '#888', '--theme-text-faint': '#aaa',
+                    '--theme-border': '#eef2f7', '--theme-border-soft': '#f0f4ff', '--theme-border-input': '#e0e7ff',
+                    '--theme-gradient': 'linear-gradient(45deg, #1089d3 0%, #12b1d1 100%)',
+                    '--theme-shadow': 'rgba(133, 189, 215, 0.15)', '--theme-shadow-soft': '#cff0ff',
+                    '--theme-nav-bg': 'rgba(255, 255, 255, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#4dabf7', '--theme-accent': '#5ac8fa', '--theme-primary-dark': '#339af0',
+                    '--theme-primary-soft': '#1a2b3d', '--theme-primary-soft-2': '#0f1a26',
+                    '--theme-bg': '#0a1118', '--theme-bg-soft': '#131b24', '--theme-card': '#131b24',
+                    '--theme-text': '#e6f0f9', '--theme-text-muted': '#a0b3c5', '--theme-text-dim': '#7a8fa3', '--theme-text-faint': '#5a6b7d',
+                    '--theme-border': '#1f2a37', '--theme-border-soft': '#16202b', '--theme-border-input': '#1f2a37',
+                    '--theme-gradient': 'linear-gradient(45deg, #4dabf7 0%, #5ac8fa 100%)',
+                    '--theme-shadow': 'rgba(77, 171, 247, 0.2)', '--theme-shadow-soft': 'rgba(77, 171, 247, 0.15)',
+                    '--theme-nav-bg': 'rgba(10, 17, 24, 0.98)'
+                }
+            },
+            sunset: {
+                name: 'Sunset', sub: 'Warm · Bold', emoji: '🌅',
+                preview: { primary: '#f5576c', gradient: 'linear-gradient(135deg, #f5576c 0%, #f093fb 100%)' },
+                light: {
+                    '--theme-primary': '#f5576c', '--theme-accent': '#f093fb', '--theme-primary-dark': '#c73a52',
+                    '--theme-primary-soft': '#ffe4e6', '--theme-primary-soft-2': '#fff1f2',
+                    '--theme-bg': '#ffffff', '--theme-bg-soft': '#fff8f9', '--theme-card': '#ffffff',
+                    '--theme-text': '#2e1a1e', '--theme-text-muted': '#6b4a50', '--theme-text-dim': '#9c7a80', '--theme-text-faint': '#c4a5aa',
+                    '--theme-border': '#fdeef0', '--theme-border-soft': '#fef5f6', '--theme-border-input': '#fde0e3',
+                    '--theme-gradient': 'linear-gradient(45deg, #f5576c 0%, #f093fb 100%)',
+                    '--theme-shadow': 'rgba(245, 87, 108, 0.15)', '--theme-shadow-soft': 'rgba(245, 87, 108, 0.2)',
+                    '--theme-nav-bg': 'rgba(255, 255, 255, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#ff6b7e', '--theme-accent': '#ff9db0', '--theme-primary-dark': '#e04458',
+                    '--theme-primary-soft': '#3d1f26', '--theme-primary-soft-2': '#1e0f13',
+                    '--theme-bg': '#1a0e11', '--theme-bg-soft': '#241318', '--theme-card': '#241318',
+                    '--theme-text': '#fbe5e8', '--theme-text-muted': '#c9a0a7', '--theme-text-dim': '#a57a82', '--theme-text-faint': '#7d5a61',
+                    '--theme-border': '#3a1f26', '--theme-border-soft': '#2a151b', '--theme-border-input': '#3a1f26',
+                    '--theme-gradient': 'linear-gradient(45deg, #ff6b7e 0%, #ff9db0 100%)',
+                    '--theme-shadow': 'rgba(255, 107, 126, 0.25)', '--theme-shadow-soft': 'rgba(255, 107, 126, 0.18)',
+                    '--theme-nav-bg': 'rgba(26, 14, 17, 0.98)'
+                }
+            },
+            pink: {
+                name: 'Blossom', sub: 'Soft · Sweet', emoji: '🌸',
+                preview: { primary: '#ec4899', gradient: 'linear-gradient(135deg, #ec4899 0%, #f9a8d4 100%)' },
+                light: {
+                    '--theme-primary': '#ec4899', '--theme-accent': '#f9a8d4', '--theme-primary-dark': '#be185d',
+                    '--theme-primary-soft': '#fce7f3', '--theme-primary-soft-2': '#fdf2f8',
+                    '--theme-bg': '#ffffff', '--theme-bg-soft': '#fff7fb', '--theme-card': '#ffffff',
+                    '--theme-text': '#2e1a26', '--theme-text-muted': '#6b4a5c', '--theme-text-dim': '#9c7a8c', '--theme-text-faint': '#c4a5b4',
+                    '--theme-border': '#fde8f1', '--theme-border-soft': '#fef3f9', '--theme-border-input': '#fbd5e5',
+                    '--theme-gradient': 'linear-gradient(45deg, #ec4899 0%, #f9a8d4 100%)',
+                    '--theme-shadow': 'rgba(236, 72, 153, 0.15)', '--theme-shadow-soft': 'rgba(236, 72, 153, 0.2)',
+                    '--theme-nav-bg': 'rgba(255, 255, 255, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#f472b6', '--theme-accent': '#fbcfe8', '--theme-primary-dark': '#db2777',
+                    '--theme-primary-soft': '#3d1f30', '--theme-primary-soft-2': '#1e0f1a',
+                    '--theme-bg': '#1a0e16', '--theme-bg-soft': '#241320', '--theme-card': '#241320',
+                    '--theme-text': '#fbe5f0', '--theme-text-muted': '#c9a0b8', '--theme-text-dim': '#a57a95', '--theme-text-faint': '#7d5a70',
+                    '--theme-border': '#3a1f30', '--theme-border-soft': '#2a1522', '--theme-border-input': '#3a1f30',
+                    '--theme-gradient': 'linear-gradient(45deg, #f472b6 0%, #fbcfe8 100%)',
+                    '--theme-shadow': 'rgba(244, 114, 182, 0.25)', '--theme-shadow-soft': 'rgba(244, 114, 182, 0.18)',
+                    '--theme-nav-bg': 'rgba(26, 14, 22, 0.98)'
+                }
+            },
+            forest: {
+                name: 'Forest', sub: 'Fresh · Natural', emoji: '🌲',
+                preview: { primary: '#16a34a', gradient: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)' },
+                light: {
+                    '--theme-primary': '#16a34a', '--theme-accent': '#22c55e', '--theme-primary-dark': '#15803d',
+                    '--theme-primary-soft': '#dcfce7', '--theme-primary-soft-2': '#f0fdf4',
+                    '--theme-bg': '#ffffff', '--theme-bg-soft': '#f8fdf9', '--theme-card': '#ffffff',
+                    '--theme-text': '#0f2e1a', '--theme-text-muted': '#3d5c47', '--theme-text-dim': '#698072', '--theme-text-faint': '#9cb3a4',
+                    '--theme-border': '#e8f5ec', '--theme-border-soft': '#f0f9f2', '--theme-border-input': '#d1e7d8',
+                    '--theme-gradient': 'linear-gradient(45deg, #16a34a 0%, #22c55e 100%)',
+                    '--theme-shadow': 'rgba(22, 163, 74, 0.15)', '--theme-shadow-soft': 'rgba(22, 163, 74, 0.2)',
+                    '--theme-nav-bg': 'rgba(255, 255, 255, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#4ade80', '--theme-accent': '#86efac', '--theme-primary-dark': '#22c55e',
+                    '--theme-primary-soft': '#14281a', '--theme-primary-soft-2': '#0a1810',
+                    '--theme-bg': '#08140d', '--theme-bg-soft': '#0f1e15', '--theme-card': '#0f1e15',
+                    '--theme-text': '#e0f2e6', '--theme-text-muted': '#a0c4ad', '--theme-text-dim': '#7a9c86', '--theme-text-faint': '#5a7c66',
+                    '--theme-border': '#1c3524', '--theme-border-soft': '#122319', '--theme-border-input': '#1c3524',
+                    '--theme-gradient': 'linear-gradient(45deg, #4ade80 0%, #86efac 100%)',
+                    '--theme-shadow': 'rgba(74, 222, 128, 0.25)', '--theme-shadow-soft': 'rgba(74, 222, 128, 0.18)',
+                    '--theme-nav-bg': 'rgba(8, 20, 13, 0.98)'
+                }
+            },
+            sunshine: {
+                name: 'Sunshine', sub: 'Bright · Cheery', emoji: '☀️',
+                preview: { primary: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)' },
+                light: {
+                    '--theme-primary': '#f59e0b', '--theme-accent': '#fbbf24', '--theme-primary-dark': '#d97706',
+                    '--theme-primary-soft': '#fef3c7', '--theme-primary-soft-2': '#fffbeb',
+                    '--theme-bg': '#ffffff', '--theme-bg-soft': '#fffdf5', '--theme-card': '#ffffff',
+                    '--theme-text': '#2e2410', '--theme-text-muted': '#6b5a30', '--theme-text-dim': '#9c8a5c', '--theme-text-faint': '#c4b588',
+                    '--theme-border': '#fdf3dc', '--theme-border-soft': '#fef9ec', '--theme-border-input': '#fce8b3',
+                    '--theme-gradient': 'linear-gradient(45deg, #f59e0b 0%, #fbbf24 100%)',
+                    '--theme-shadow': 'rgba(245, 158, 11, 0.15)', '--theme-shadow-soft': 'rgba(245, 158, 11, 0.2)',
+                    '--theme-nav-bg': 'rgba(255, 255, 255, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#fbbf24', '--theme-accent': '#fcd34d', '--theme-primary-dark': '#f59e0b',
+                    '--theme-primary-soft': '#3d3018', '--theme-primary-soft-2': '#1f1808',
+                    '--theme-bg': '#171207', '--theme-bg-soft': '#221a0c', '--theme-card': '#221a0c',
+                    '--theme-text': '#fbf3d9', '--theme-text-muted': '#c9baa0', '--theme-text-dim': '#a59578', '--theme-text-faint': '#7d7058',
+                    '--theme-border': '#3a2e15', '--theme-border-soft': '#2a210f', '--theme-border-input': '#3a2e15',
+                    '--theme-gradient': 'linear-gradient(45deg, #fbbf24 0%, #fcd34d 100%)',
+                    '--theme-shadow': 'rgba(251, 191, 36, 0.25)', '--theme-shadow-soft': 'rgba(251, 191, 36, 0.18)',
+                    '--theme-nav-bg': 'rgba(23, 18, 7, 0.98)'
+                }
+            },
+            starry: {
+                name: 'Starry', sub: 'Cosmic · Night', emoji: '✨',
+                preview: { primary: '#8b5cf6', gradient: 'linear-gradient(135deg, #1e1b4b 0%, #6d28d9 50%, #c4b5fd 100%)' },
+                light: {
+                    '--theme-primary': '#a78bfa', '--theme-accent': '#c4b5fd', '--theme-primary-dark': '#8b5cf6',
+                    '--theme-primary-soft': '#2a1e3d', '--theme-primary-soft-2': '#150e26',
+                    '--theme-bg': '#0a0714', '--theme-bg-soft': '#0e0818', '--theme-card': '#17102a',
+                    '--theme-text': '#e8e0ff', '--theme-text-muted': '#b0a0d0', '--theme-text-dim': '#8878b0', '--theme-text-faint': '#665a88',
+                    '--theme-border': '#281e3d', '--theme-border-soft': '#1a1229', '--theme-border-input': '#281e3d',
+                    '--theme-gradient': 'linear-gradient(45deg, #a78bfa 0%, #c4b5fd 100%)',
+                    '--theme-shadow': 'rgba(167, 139, 250, 0.3)', '--theme-shadow-soft': 'rgba(167, 139, 250, 0.2)',
+                    '--theme-nav-bg': 'rgba(10, 7, 20, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#a78bfa', '--theme-accent': '#c4b5fd', '--theme-primary-dark': '#8b5cf6',
+                    '--theme-primary-soft': '#2a1e3d', '--theme-primary-soft-2': '#150e26',
+                    '--theme-bg': '#0a0714', '--theme-bg-soft': '#0e0818', '--theme-card': '#17102a',
+                    '--theme-text': '#e8e0ff', '--theme-text-muted': '#b0a0d0', '--theme-text-dim': '#8878b0', '--theme-text-faint': '#665a88',
+                    '--theme-border': '#281e3d', '--theme-border-soft': '#1a1229', '--theme-border-input': '#281e3d',
+                    '--theme-gradient': 'linear-gradient(45deg, #a78bfa 0%, #c4b5fd 100%)',
+                    '--theme-shadow': 'rgba(167, 139, 250, 0.3)', '--theme-shadow-soft': 'rgba(167, 139, 250, 0.2)',
+                    '--theme-nav-bg': 'rgba(10, 7, 20, 0.98)'
+                }
+            },
+            cafe: {
+                name: 'Café', sub: 'Warm · Cozy', emoji: '☕',
+                preview: { primary: '#8B5E3C', gradient: 'linear-gradient(135deg, #8B5E3C 0%, #D2B48C 100%)' },
+                light: {
+                    '--theme-primary': '#8B5E3C', '--theme-accent': '#D2B48C', '--theme-primary-dark': '#6B4226',
+                    '--theme-primary-soft': '#F5E6D3', '--theme-primary-soft-2': '#FAF3E8',
+                    '--theme-bg': '#FDF8F2', '--theme-bg-soft': '#F9F1E7', '--theme-card': '#FFFFFF',
+                    '--theme-text': '#3E2C1C', '--theme-text-muted': '#6B5A4A', '--theme-text-dim': '#9C8A7A', '--theme-text-faint': '#C4B5A5',
+                    '--theme-border': '#EDE0D0', '--theme-border-soft': '#F5EDE2', '--theme-border-input': '#DCC8B0',
+                    '--theme-gradient': 'linear-gradient(45deg, #8B5E3C 0%, #D2B48C 100%)',
+                    '--theme-shadow': 'rgba(139, 94, 60, 0.15)', '--theme-shadow-soft': 'rgba(139, 94, 60, 0.2)',
+                    '--theme-nav-bg': 'rgba(253, 248, 242, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#C49A6C', '--theme-accent': '#D2B48C', '--theme-primary-dark': '#A67B5B',
+                    '--theme-primary-soft': '#3D2E1E', '--theme-primary-soft-2': '#1E150E',
+                    '--theme-bg': '#1A120B', '--theme-bg-soft': '#241A12', '--theme-card': '#241A12',
+                    '--theme-text': '#F0E6D8', '--theme-text-muted': '#C4B5A0', '--theme-text-dim': '#A09080', '--theme-text-faint': '#7D6E60',
+                    '--theme-border': '#3A2C1E', '--theme-border-soft': '#2A1E14', '--theme-border-input': '#3A2C1E',
+                    '--theme-gradient': 'linear-gradient(45deg, #C49A6C 0%, #D2B48C 100%)',
+                    '--theme-shadow': 'rgba(196, 154, 108, 0.25)', '--theme-shadow-soft': 'rgba(196, 154, 108, 0.18)',
+                    '--theme-nav-bg': 'rgba(26, 18, 11, 0.98)'
+                }
+            },
+            crimson: {
+                name: 'Crimson', sub: 'Bold · Passion', emoji: '❤️',
+                preview: { primary: '#dc2626', gradient: 'linear-gradient(135deg, #dc2626 0%, #f87171 100%)' },
+                light: {
+                    '--theme-primary': '#dc2626', '--theme-accent': '#f87171', '--theme-primary-dark': '#b91c1c',
+                    '--theme-primary-soft': '#fee2e2', '--theme-primary-soft-2': '#fef2f2',
+                    '--theme-bg': '#ffffff', '--theme-bg-soft': '#fff5f5', '--theme-card': '#ffffff',
+                    '--theme-text': '#2e1a1a', '--theme-text-muted': '#6b4a4a', '--theme-text-dim': '#9c7a7a', '--theme-text-faint': '#c4a5a5',
+                    '--theme-border': '#fde8e8', '--theme-border-soft': '#fef3f3', '--theme-border-input': '#fbd5d5',
+                    '--theme-gradient': 'linear-gradient(45deg, #dc2626 0%, #f87171 100%)',
+                    '--theme-shadow': 'rgba(220, 38, 38, 0.15)', '--theme-shadow-soft': 'rgba(220, 38, 38, 0.2)',
+                    '--theme-nav-bg': 'rgba(255, 255, 255, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#ef4444', '--theme-accent': '#fca5a5', '--theme-primary-dark': '#dc2626',
+                    '--theme-primary-soft': '#3d1a1a', '--theme-primary-soft-2': '#1e0e0e',
+                    '--theme-bg': '#1a0a0a', '--theme-bg-soft': '#241010', '--theme-card': '#241010',
+                    '--theme-text': '#fbe5e5', '--theme-text-muted': '#c9a0a0', '--theme-text-dim': '#a57a7a', '--theme-text-faint': '#7d5a5a',
+                    '--theme-border': '#3a1a1a', '--theme-border-soft': '#2a1010', '--theme-border-input': '#3a1a1a',
+                    '--theme-gradient': 'linear-gradient(45deg, #ef4444 0%, #fca5a5 100%)',
+                    '--theme-shadow': 'rgba(239, 68, 68, 0.25)', '--theme-shadow-soft': 'rgba(239, 68, 68, 0.18)',
+                    '--theme-nav-bg': 'rgba(26, 10, 10, 0.98)'
+                }
+            },
+            maroon: {
+                name: 'Maroon', sub: 'Deep · Classic', emoji: '🍷',
+                preview: { primary: '#800000', gradient: 'linear-gradient(135deg, #800000 0%, #a52a2a 100%)' },
+                light: {
+                    '--theme-primary': '#800000', '--theme-accent': '#a52a2a', '--theme-primary-dark': '#5c0000',
+                    '--theme-primary-soft': '#f5e6e6', '--theme-primary-soft-2': '#faf0f0',
+                    '--theme-bg': '#fdf8f8', '--theme-bg-soft': '#f9f0f0', '--theme-card': '#ffffff',
+                    '--theme-text': '#2e1a1a', '--theme-text-muted': '#5c3a3a', '--theme-text-dim': '#8a6a6a', '--theme-text-faint': '#b5a0a0',
+                    '--theme-border': '#e8d5d5', '--theme-border-soft': '#f0e0e0', '--theme-border-input': '#d4b5b5',
+                    '--theme-gradient': 'linear-gradient(45deg, #800000 0%, #a52a2a 100%)',
+                    '--theme-shadow': 'rgba(128, 0, 0, 0.15)', '--theme-shadow-soft': 'rgba(128, 0, 0, 0.2)',
+                    '--theme-nav-bg': 'rgba(253, 248, 248, 0.98)'
+                },
+                dark: {
+                    '--theme-primary': '#a52a2a', '--theme-accent': '#c04040', '--theme-primary-dark': '#800000',
+                    '--theme-primary-soft': '#2a1515', '--theme-primary-soft-2': '#1a0d0d',
+                    '--theme-bg': '#120808', '--theme-bg-soft': '#1a0f0f', '--theme-card': '#1a0f0f',
+                    '--theme-text': '#f0e0e0', '--theme-text-muted': '#c4a0a0', '--theme-text-dim': '#a08080', '--theme-text-faint': '#7d6060',
+                    '--theme-border': '#2e1a1a', '--theme-border-soft': '#221212', '--theme-border-input': '#2e1a1a',
+                    '--theme-gradient': 'linear-gradient(45deg, #a52a2a 0%, #c04040 100%)',
+                    '--theme-shadow': 'rgba(165, 42, 42, 0.25)', '--theme-shadow-soft': 'rgba(165, 42, 42, 0.18)',
+                    '--theme-nav-bg': 'rgba(18, 8, 8, 0.98)'
+                }
+            }
+        };
+
+        const DEFAULT_THEME = { preset: 'ocean', mode: 'light' };
+        let selectedTheme = { ...DEFAULT_THEME };
+
+        /**
+         * ★ KEY FUNCTION: Injects ONLY the active theme's shapes into the DOM.
+         * This guarantees ZERO element sharing between themes.
+         */
+        function injectThemeShapes(presetKey) {
+            const container = document.getElementById('themeBgShapes');
+            if (!container) return;
+            const html = THEME_SHAPES[presetKey];
+            // Only re-inject if the current theme's shapes aren't already there
+            if (container.dataset.activeTheme !== presetKey) {
+                container.innerHTML = html || '';
+                container.dataset.activeTheme = presetKey;
+            }
+        }
+
+        function applyTheme(theme) {
+            const preset = THEMES[theme.preset] || THEMES.ocean;
+            const mode = theme.mode === 'dark' ? 'dark' : 'light';
+            const palette = preset[mode];
+
+            const root = document.documentElement;
+            Object.keys(palette).forEach(key => {
+                root.style.setProperty(key, palette[key]);
+            });
+            root.setAttribute('data-timawa-theme', theme.preset);
+            root.setAttribute('data-timawa-mode', mode);
+
+            // ★ Inject ONLY this theme's shapes
+            injectThemeShapes(theme.preset);
+
+            let meta = document.querySelector('meta[name="theme-color"]');
+            if (!meta) {
+                meta = document.createElement('meta');
+                meta.name = 'theme-color';
+                document.head.appendChild(meta);
+            }
+            meta.content = palette['--theme-bg'];
+        }
+
+        function persistThemeLocally(theme) {
+            try { localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme)); } catch (e) {}
+        }
+
+        function readThemeFromStorage() {
+            try {
+                const raw = localStorage.getItem(THEME_STORAGE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.preset && THEMES[parsed.preset]) {
+                    return { preset: parsed.preset, mode: parsed.mode === 'dark' ? 'dark' : 'light' };
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        function broadcastThemeChange(theme) {
+            try {
+                if ('BroadcastChannel' in window) {
+                    const bc = new BroadcastChannel('timawa_theme_sync');
+                    bc.postMessage({ type: 'theme-change', theme });
+                    bc.close();
+                }
+            } catch (e) {}
+            try { window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: theme })); } catch (e) {}
+        }
+
+        function renderThemeGrid() {
+            const grid = document.getElementById('themeGrid');
+            if (!grid) return;
+            let html = '';
+            Object.keys(THEMES).forEach(key => {
+                const theme = THEMES[key];
+                const isActive = key === selectedTheme.preset;
+                html += `
+                    <button type="button"
+                            class="theme-preset ${isActive ? 'active' : ''}"
+                            data-theme="${key}"
+                            onclick="selectThemePreset('${key}')"
+                            aria-label="Apply ${theme.name} theme">
+                        <div class="preview" style="background: ${theme.preview.gradient};"></div>
+                        <div class="preset-name">${theme.emoji} ${theme.name}</div>
+                        <div class="preset-sub">${theme.sub}</div>
+                    </button>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        function selectThemePreset(key) {
+            if (!THEMES[key]) return;
+            selectedTheme.preset = key;
+            applyTheme(selectedTheme); // live preview only — no persist
+            renderThemeGrid();
+            showThemeToast(`Theme changed to ${THEMES[key].name} (unsaved)`);
+        }
+
+        function setThemeMode(mode) {
+            if (mode !== 'light' && mode !== 'dark') return;
+            selectedTheme.mode = mode;
+            applyTheme(selectedTheme); // live preview only — no persist
+            document.querySelectorAll('#modeToggle .mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            showThemeToast(`Switched to ${mode === 'dark' ? 'Dark' : 'Light'} mode (unsaved)`);
+        }
+
+        /* ================================================================
+           ===== THEME TOAST (visual feedback on theme change) =====
+           ================================================================ */
+        let themeToastTimer = null;
+        function showThemeToast(message) {
+            let toast = document.getElementById('themeToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'themeToast';
+                toast.className = 'theme-toast';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            toast.classList.add('show');
+
+            if (themeToastTimer) clearTimeout(themeToastTimer);
+            themeToastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 1800);
+        }
+
+        function syncThemeUI() {
+            renderThemeGrid();
+            document.querySelectorAll('#modeToggle .mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === selectedTheme.mode);
+            });
+        }
+
+        // ================================================================
+        // FIREBASE
+        // ================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC05mMZ304IN_S0-NRv2Uf7E5_tZLiM4Js",
+            authDomain: "timawa2.firebaseapp.com",
+            projectId: "timawa2",
+            storageBucket: "timawa2.firebasestorage.app",
+            messagingSenderId: "1051426551565",
+            appId: "1:1051426551565:web:01d33631309bb9336fe244"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+            if (err.code === 'failed-precondition') console.warn('Firestore persistence: multiple tabs open.');
+            else if (err.code === 'unimplemented') console.warn('Firestore persistence: not supported.');
+        });
+
+        const CLOUDINARY_CONFIG = { cloudName: "ooq99nlw", uploadPreset: "t-imawa" };
+        const USER_PROFILE_CACHE_TTL = 5 * 60 * 1000;
+
+        let selectedFile = null;
+        let currentUser = null;
+        let profileData = null;
+        let isOffline = false;
+
+        // ================================================================
+        // ANNOUNCEMENTS
+        // ================================================================
+        let announcementUser = null;
+        let announcementUnsubscribe = null;
+        let announcementItems = [];
+        let announcementReadIds = new Set();
+        let currentAnnouncementViewId = null;
+
+        const ANNOUNCEMENT_READ_CACHE_PREFIX = 'timawa_ann_read_';
+        const ANNOUNCEMENT_AUTOGEN_KEY = 'timawa_ann_autogen_';
+        const ANNOUNCEMENT_CACHE_KEY = 'timawa_ann_cache_';
+        const ANNOUNCEMENT_LIMIT = 30;
+        const ANNOUNCEMENT_CACHE_TTL = 5 * 60 * 1000;
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function formatRelativeTime(date) {
+            if (!date) return 'Just now';
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMin = Math.floor(diffMs / 60000);
+            if (diffMin < 1) return 'Just now';
+            if (diffMin < 60) return `${diffMin}m ago`;
+            const diffHr = Math.floor(diffMin / 60);
+            if (diffHr < 24) return `${diffHr}h ago`;
+            const diffDay = Math.floor(diffHr / 24);
+            if (diffDay < 7) return `${diffDay}d ago`;
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function formatFullDate(date) {
+            if (!date) return '';
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long',
+                day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function showSaveConfirmModal({ title, message, type }) {
+            const modal = document.getElementById('saveConfirmModal');
+            const iconWrap = document.getElementById('saveConfirmIcon');
+            const titleEl = document.getElementById('saveConfirmTitle');
+            const msgEl = document.getElementById('saveConfirmMessage');
+
+            titleEl.textContent = title || 'Information Saved';
+            msgEl.textContent = message || '';
+            iconWrap.className = 'save-confirm-icon-wrap ' + (type || 'success');
+
+            const iconMap = {
+                success: '<i class="fas fa-check-circle"></i>',
+                info: '<i class="fas fa-info-circle"></i>',
+                warn: '<i class="fas fa-exclamation-circle"></i>'
+            };
+            iconWrap.innerHTML = iconMap[type] || iconMap.success;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSaveConfirmModal() {
+            document.getElementById('saveConfirmModal').classList.remove('active');
+            if (!anyModalOpen()) document.body.style.overflow = 'auto';
+        }
+
+        const ANNOUNCEMENT_TYPE_META = {
+            'admin':     { icon: '📢', cls: 'type-admin',     label: 'Announcement' },
+            'birthday':  { icon: '🎂', cls: 'type-birthday',  label: 'Birthday' },
+            'event':     { icon: '📅', cls: 'type-event',     label: 'Event' },
+            'highlight': { icon: '📸', cls: 'type-highlight', label: 'Highlight' },
+            'member':    { icon: '👥', cls: 'type-member',    label: 'New Member' },
+            'reply':     { icon: '💬', cls: 'type-reply',     label: 'Reply' },
+            'mention':   { icon: '📣', cls: 'type-mention',   label: 'Mention' }
+        };
+
+        function getAnnouncementMeta(type) {
+            return ANNOUNCEMENT_TYPE_META[type] || ANNOUNCEMENT_TYPE_META['admin'];
+        }
+
+        function loadAnnouncementReadCache(uid) {
+            try {
+                const raw = localStorage.getItem(ANNOUNCEMENT_READ_CACHE_PREFIX + uid);
+                if (raw) {
+                    const arr = JSON.parse(raw);
+                    if (Array.isArray(arr)) return new Set(arr);
+                }
+            } catch (e) {}
+            return new Set();
+        }
+
+        function saveAnnouncementReadCache(uid, idSet) {
+            try { localStorage.setItem(ANNOUNCEMENT_READ_CACHE_PREFIX + uid, JSON.stringify([...idSet])); } catch (e) {}
+        }
+
+        function loadAnnouncementSnapshotCache(uid) {
+            try {
+                const raw = localStorage.getItem(ANNOUNCEMENT_CACHE_KEY + uid);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.uid === uid && (Date.now() - parsed.t) < ANNOUNCEMENT_CACHE_TTL) {
+                    return parsed.items;
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        function saveAnnouncementSnapshotCache(uid, items) {
+            try { localStorage.setItem(ANNOUNCEMENT_CACHE_KEY + uid, JSON.stringify({ uid, t: Date.now(), items })); } catch (e) {}
+        }
+
+        function hasAutogenRunToday(uid, kind) {
+            try {
+                const raw = localStorage.getItem(ANNOUNCEMENT_AUTOGEN_KEY + uid);
+                if (!raw) return false;
+                const parsed = JSON.parse(raw);
+                const today = new Date().toISOString().slice(0, 10);
+                return parsed && parsed.date === today && parsed.kinds && parsed.kinds[kind] === true;
+            } catch (e) { return false; }
+        }
+
+        function markAutogenRunToday(uid, kind) {
+            try {
+                const today = new Date().toISOString().slice(0, 10);
+                let parsed = { date: today, kinds: {} };
+                const raw = localStorage.getItem(ANNOUNCEMENT_AUTOGEN_KEY + uid);
+                if (raw) { try { parsed = JSON.parse(raw); } catch (e) {} }
+                if (parsed.date !== today) parsed = { date: today, kinds: {} };
+                parsed.kinds[kind] = true;
+                localStorage.setItem(ANNOUNCEMENT_AUTOGEN_KEY + uid, JSON.stringify(parsed));
+            } catch (e) {}
+        }
+
+        function toggleAnnouncementPopup(event, source) {
+            if (event) event.stopPropagation();
+            const popup = document.getElementById('announcementPopup');
+            const desktopBell = document.getElementById('announcementBell');
+            const mobileBell = document.getElementById('announcementBellMobile');
+            const bell = (source === 'mobile' || (!desktopBell && mobileBell)) ? mobileBell : desktopBell;
+            if (!popup || !bell) return;
+
+            const isOpen = popup.classList.toggle('open');
+            if (bell) bell.classList.toggle('active', isOpen);
+
+            if (isOpen) positionAnnouncementPopup(bell);
+            else {
+                if (desktopBell) desktopBell.classList.remove('active');
+                if (mobileBell) mobileBell.classList.remove('active');
+            }
+        }
+
+        function positionAnnouncementPopup(anchorBell) {
+            const popup = document.getElementById('announcementPopup');
+            const bell = anchorBell || document.getElementById('announcementBell') || document.getElementById('announcementBellMobile');
+            if (!popup || !bell) return;
+
+            if (window.innerWidth > 768) {
+                const rect = bell.getBoundingClientRect();
+                popup.style.position = 'fixed';
+                popup.style.top = (rect.bottom + 14) + 'px';
+                popup.style.right = (window.innerWidth - rect.right - 8) + 'px';
+                popup.style.left = 'auto';
+            } else {
+                popup.style.position = 'fixed';
+                popup.style.top = '70px';
+                popup.style.left = '14px';
+                popup.style.right = '14px';
+            }
+        }
+
+        function closeAnnouncementPopup() {
+            const popup = document.getElementById('announcementPopup');
+            const desktopBell = document.getElementById('announcementBell');
+            const mobileBell = document.getElementById('announcementBellMobile');
+            if (popup) popup.classList.remove('open');
+            if (desktopBell) desktopBell.classList.remove('active');
+            if (mobileBell) mobileBell.classList.remove('active');
+        }
+
+        function renderAnnouncements() {
+            const list = document.getElementById('announcementList');
+            const footer = document.getElementById('announcementFooter');
+            const badgeDesktop = document.getElementById('announcementBadge');
+            const badgeMobile = document.getElementById('announcementBadgeMobile');
+            if (!list) return;
+
+            const unreadCount = announcementItems.filter(a => !announcementReadIds.has(a.id)).length;
+
+            const setBadge = (badge) => {
+                if (!badge) return;
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+                    badge.classList.add('show');
+                } else badge.classList.remove('show');
+            };
+            setBadge(badgeDesktop);
+            setBadge(badgeMobile);
+
+            const desktopBell = document.getElementById('announcementBell');
+            const mobileBell = document.getElementById('announcementBellMobile');
+            if (desktopBell) desktopBell.classList.toggle('has-new', unreadCount > 0);
+            if (mobileBell) mobileBell.classList.toggle('has-new', unreadCount > 0);
+
+            if (announcementItems.length === 0) {
+                list.innerHTML = `<div class="announcement-empty"><i class="fas fa-inbox"></i><p>No announcements yet</p></div>`;
+                if (footer) footer.textContent = 'You\'re all caught up ✨';
+                return;
+            }
+
+            let html = '';
+            announcementItems.forEach(item => {
+                const meta = getAnnouncementMeta(item.type);
+                const isUnread = !announcementReadIds.has(item.id);
+                const createdDate = item.createdAt
+                    ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt)
+                    : new Date();
+                const priorityBadge = item.priority === 'urgent'
+                    ? '<span class="announcement-priority-badge urgent">Urgent</span>'
+                    : item.priority === 'info'
+                        ? '<span class="announcement-priority-badge info">Info</span>'
+                        : '';
+
+                html += `
+                    <div class="announcement-item ${isUnread ? 'unread' : ''}" data-announcement-id="${escapeAttr(item.id)}" onclick="handleAnnouncementClick('${escapeAttr(item.id)}')">
+                        <div class="announcement-icon ${meta.cls}">${item.icon || meta.icon}</div>
+                        <div class="announcement-body">
+                            <div class="announcement-title">${escapeHtml(item.title || 'Announcement')}${priorityBadge}</div>
+                            <div class="announcement-message">${escapeHtml(item.message || '')}</div>
+                            <div class="announcement-time">${formatRelativeTime(createdDate)}</div>
+                        </div>
+                        ${isUnread ? '<span class="announcement-unread-dot"></span>' : ''}
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+
+            if (footer) {
+                footer.textContent = unreadCount > 0
+                    ? `${unreadCount} unread announcement${unreadCount !== 1 ? 's' : ''}`
+                    : 'You\'re all caught up ✨';
+            }
+        }
+
+        async function markAnnouncementRead(id) {
+            if (!announcementUser || announcementReadIds.has(id)) return;
+            announcementReadIds.add(id);
+            saveAnnouncementReadCache(announcementUser.uid, announcementReadIds);
+            renderAnnouncements();
+            try {
+                await db.collection('announcements').doc(id).update({
+                    readBy: firebase.firestore.FieldValue.arrayUnion(announcementUser.uid)
+                });
+            } catch (err) { console.warn('Could not persist read state:', err); }
+        }
+
+        async function markAllAnnouncementsRead() {
+            if (!announcementUser) return;
+            const unreadIds = announcementItems.filter(a => !announcementReadIds.has(a.id)).map(a => a.id);
+            if (unreadIds.length === 0) return;
+            unreadIds.forEach(id => announcementReadIds.add(id));
+            saveAnnouncementReadCache(announcementUser.uid, announcementReadIds);
+            renderAnnouncements();
+            try {
+                const batch = db.batch();
+                unreadIds.forEach(id => {
+                    batch.update(db.collection('announcements').doc(id), {
+                        readBy: firebase.firestore.FieldValue.arrayUnion(announcementUser.uid)
+                    });
+                });
+                await batch.commit();
+            } catch (err) { console.warn('Could not persist read states:', err); }
+        }
+
+        async function handleAnnouncementClick(id) {
+            const item = announcementItems.find(a => a.id === id);
+            if (!item) return;
+            markAnnouncementRead(id);
+            closeAnnouncementPopup();
+            openAnnouncementView(item);
+        }
+
+        function openAnnouncementView(item) {
+            if (!item) return;
+            currentAnnouncementViewId = item.id;
+            const meta = getAnnouncementMeta(item.type);
+            const createdDate = item.createdAt
+                ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt)
+                : new Date();
+
+            document.getElementById('annViewIcon').textContent = item.icon || meta.icon;
+            document.getElementById('annViewType').textContent = meta.label;
+
+            const priorityEl = document.getElementById('annViewPriority');
+            if (item.priority === 'urgent') {
+                priorityEl.style.display = 'inline-flex';
+                priorityEl.className = 'announcement-view-priority urgent';
+                priorityEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Urgent';
+            } else if (item.priority === 'info') {
+                priorityEl.style.display = 'inline-flex';
+                priorityEl.className = 'announcement-view-priority info';
+                priorityEl.innerHTML = '<i class="fas fa-info-circle"></i> Info';
+            } else priorityEl.style.display = 'none';
+
+            document.getElementById('annViewTitle').textContent = item.title || 'Announcement';
+            document.getElementById('annViewMessage').textContent = item.message || '';
+            document.getElementById('annViewAuthor').textContent = item.createdByName || 'Admin';
+            document.getElementById('annViewTime').textContent = formatFullDate(createdDate);
+
+            const linkBtn = document.getElementById('annViewLinkBtn');
+            const linkLabel = document.getElementById('annViewLinkLabel');
+            if (item.link) {
+                linkBtn.style.display = 'inline-flex';
+                linkBtn.href = item.link;
+                linkLabel.textContent = item.linkLabel || 'Open Link';
+            } else linkBtn.style.display = 'none';
+
+            document.getElementById('announcementViewModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAnnouncementView() {
+            document.getElementById('announcementViewModal').classList.remove('active');
+            if (!anyModalOpen()) document.body.style.overflow = 'auto';
+            currentAnnouncementViewId = null;
+        }
+
+        function loadAnnouncements(user) {
+            if (!user) return;
+            if (announcementUnsubscribe) announcementUnsubscribe();
+
+            announcementUser = user;
+            announcementReadIds = loadAnnouncementReadCache(user.uid);
+
+            const popup = document.getElementById('announcementPopup');
+            if (popup) popup.style.display = 'block';
+
+            const cached = loadAnnouncementSnapshotCache(user.uid);
+            if (cached && cached.length > 0) {
+                announcementItems = cached;
+                renderAnnouncements();
+            }
+
+            announcementUnsubscribe = db.collection('announcements')
+                .orderBy('createdAt', 'desc')
+                .limit(ANNOUNCEMENT_LIMIT)
+                .onSnapshot((snapshot) => {
+                    const now = new Date();
+                    const items = [];
+                    const firestoreReadIds = new Set();
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.expiresAt) {
+                            const exp = data.expiresAt.seconds ? new Date(data.expiresAt.seconds * 1000) : new Date(data.expiresAt);
+                            if (exp < now) return;
+                        }
+                        if (data.targetUid && data.targetUid !== '' && data.targetUid !== user.uid) return;
+                        items.push({ id: doc.id, ...data });
+                        if (Array.isArray(data.readBy) && data.readBy.includes(user.uid)) {
+                            firestoreReadIds.add(doc.id);
+                        }
+                    });
+
+                    let changed = false;
+                    firestoreReadIds.forEach(id => {
+                        if (!announcementReadIds.has(id)) {
+                            announcementReadIds.add(id);
+                            changed = true;
+                        }
+                    });
+                    if (changed) saveAnnouncementReadCache(user.uid, announcementReadIds);
+
+                    announcementItems = items;
+                    saveAnnouncementSnapshotCache(user.uid, items);
+                    renderAnnouncements();
+                }, (error) => {
+                    console.warn('Announcements listener error:', error.message);
+                    if (!announcementItems.length) {
+                        announcementItems = [];
+                        renderAnnouncements();
+                    }
+                });
+        }
+
+        function needsAnyAutogen(uid) {
+            return !hasAutogenRunToday(uid, 'birthdays_all') ||
+                   !hasAutogenRunToday(uid, 'events') ||
+                   !hasAutogenRunToday(uid, 'highlights');
+        }
+
+        async function autoGenerateBirthdayAnnouncementsForEveryone(currentUser) {
+            if (hasAutogenRunToday(currentUser.uid, 'birthdays_all')) return;
+            try {
+                const today = new Date();
+                const todayMonth = today.getMonth();
+                const todayDate = today.getDate();
+                const snap = await db.collection('users').limit(200).get();
+                const todayBirthdayUsers = [];
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.birthday || typeof data.birthday !== 'string') return;
+                    const parts = data.birthday.split('-');
+                    if (parts.length !== 3) return;
+                    const bMonth = parseInt(parts[1], 10) - 1;
+                    const bDay = parseInt(parts[2], 10);
+                    if (isNaN(bMonth) || isNaN(bDay)) return;
+                    if (bMonth === todayMonth && bDay === todayDate) {
+                        todayBirthdayUsers.push({ uid: doc.id, name: data.displayName || data.email || 'Someone' });
+                    }
+                });
+                if (todayBirthdayUsers.length === 0) { markAutogenRunToday(currentUser.uid, 'birthdays_all'); return; }
+
+                const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+                let alreadyAnnouncedUids = new Set();
+                try {
+                    const existingSnap = await db.collection('announcements')
+                        .where('type', '==', 'birthday').where('createdAt', '>=', todayStart).get();
+                    existingSnap.forEach(doc => {
+                        const d = doc.data();
+                        if (d.referenceId) alreadyAnnouncedUids.add(d.referenceId);
+                    });
+                } catch (err) {
+                    const fallbackSnap = await db.collection('announcements').orderBy('createdAt', 'desc').limit(50).get();
+                    fallbackSnap.forEach(doc => {
+                        const d = doc.data();
+                        if (d.type === 'birthday' && d.referenceId) {
+                            const createdAt = d.createdAt && d.createdAt.seconds ? new Date(d.createdAt.seconds * 1000) : null;
+                            if (createdAt && createdAt >= todayStart) alreadyAnnouncedUids.add(d.referenceId);
+                        }
+                    });
+                }
+                const batch = db.batch();
+                let created = 0;
+                todayBirthdayUsers.forEach(person => {
+                    if (alreadyAnnouncedUids.has(person.uid)) return;
+                    const ref = db.collection('announcements').doc();
+                    batch.set(ref, {
+                        type: 'birthday',
+                        title: `🎂 It's ${person.name}'s Birthday Today!`,
+                        message: `Don't forget to greet ${person.name} a happy birthday! 🎉`,
+                        icon: '🎂', priority: 'urgent',
+                        link: 'calendar.html', linkLabel: 'View Calendar',
+                        targetUid: '', referenceId: person.uid, readBy: [],
+                        createdBy: 'system', createdByName: 'System',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+                    });
+                    created++;
+                });
+                if (created > 0) await batch.commit();
+            } catch (e) { console.warn('birthday gen (all):', e.message); }
+            markAutogenRunToday(currentUser.uid, 'birthdays_all');
+        }
+
+        async function autoGenerateEventReminders(user) {
+            if (hasAutogenRunToday(user.uid, 'events')) return;
+            try {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(0, 0, 0, 0);
+                const dayAfter = new Date(tomorrow);
+                dayAfter.setDate(dayAfter.getDate() + 1);
+                const snap = await db.collection('events')
+                    .where('dateTime', '>=', tomorrow)
+                    .where('dateTime', '<', dayAfter)
+                    .limit(5).get();
+                if (snap.empty) { markAutogenRunToday(user.uid, 'events'); return; }
+
+                const alreadyAnnounced = new Set();
+                try {
+                    const existingSnap = await db.collection('announcements').where('type', '==', 'event').get();
+                    existingSnap.forEach(doc => {
+                        const d = doc.data();
+                        if (d.referenceId) alreadyAnnounced.add(d.referenceId);
+                    });
+                } catch (guardErr) { markAutogenRunToday(user.uid, 'events'); return; }
+
+                const batch = db.batch();
+                let created = 0;
+                snap.forEach(doc => {
+                    if (alreadyAnnounced.has(doc.id)) return;
+                    const data = doc.data();
+                    const eventRef = db.collection('announcements').doc();
+                    const title = data.title || 'Upcoming Event';
+                    const loc = data.location ? ` at ${data.location}` : '';
+                    batch.set(eventRef, {
+                        type: 'event',
+                        title: `⏰ Reminder: ${title} is tomorrow!`,
+                        message: `${title}${loc} — happening tomorrow. Don't miss it!`,
+                        icon: '📅', priority: 'urgent',
+                        link: 'calendar.html', linkLabel: 'View Event',
+                        targetUid: '', referenceId: doc.id, readBy: [],
+                        createdBy: 'system', createdByName: 'System',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+                    });
+                    created++;
+                });
+                if (created > 0) await batch.commit();
+            } catch (e) { console.warn('event gen:', e.message); }
+            markAutogenRunToday(user.uid, 'events');
+        }
+
+        async function autoGenerateHighlightAnnouncements(user) {
+            if (hasAutogenRunToday(user.uid, 'highlights')) return;
+            try {
+                const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                const snap = await db.collection('highlights')
+                    .where('createdAt', '>=', yesterday)
+                    .orderBy('createdAt', 'desc').limit(5).get();
+                if (snap.empty) { markAutogenRunToday(user.uid, 'highlights'); return; }
+
+                const photoCount = snap.size;
+                const firstDoc = snap.docs[0].data();
+                const author = firstDoc.authorName || 'Someone';
+                const latestHighlightId = snap.docs[0].id;
+                const titleText = photoCount === 1
+                    ? `📸 ${author} shared a new highlight!`
+                    : `📸 ${photoCount} new highlights shared!`;
+
+                try {
+                    const existingSnap = await db.collection('announcements')
+                        .where('type', '==', 'highlight')
+                        .where('referenceId', '==', latestHighlightId).limit(1).get();
+                    if (!existingSnap.empty) { markAutogenRunToday(user.uid, 'highlights'); return; }
+                } catch (guardErr) { markAutogenRunToday(user.uid, 'highlights'); return; }
+
+                await db.collection('announcements').add({
+                    type: 'highlight',
+                    title: titleText,
+                    message: photoCount === 1
+                        ? `${author} just shared a new moment with the squad.`
+                        : `Fresh moments from the squad — check them out!`,
+                    icon: '📸', priority: 'info',
+                    link: 'index.html#highlights', linkLabel: 'View Highlights',
+                    targetUid: '', referenceId: latestHighlightId, readBy: [],
+                    createdBy: 'system', createdByName: 'System',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                });
+            } catch (e) { console.warn('highlight gen:', e.message); }
+            markAutogenRunToday(user.uid, 'highlights');
+        }
+
+        async function runAutoGeneration(user, userData) {
+            if (!needsAnyAutogen(user.uid)) return;
+            setTimeout(async () => {
+                try { await autoGenerateBirthdayAnnouncementsForEveryone(user); } catch (e) {}
+                try { await autoGenerateEventReminders(user); } catch (e) {}
+                try { await autoGenerateHighlightAnnouncements(user); } catch (e) {}
+            }, 1500);
+        }
+
+        async function autoGenerateMemberAnnouncement(newUser, newUserData) {
+            if (!newUser || !newUserData) return;
+            if (hasAutogenRunToday(newUser.uid, 'welcome_' + newUser.uid)) return;
+            const name = newUserData.displayName || newUserData.email || 'A new member';
+            try {
+                await db.collection('announcements').add({
+                    type: 'member',
+                    title: `Welcome ${name}! 🎉`,
+                    message: `${name} just joined the TIMAWA squad. Say hi!`,
+                    icon: '👥', priority: 'info',
+                    link: 'index.html#members-section', linkLabel: 'View Members',
+                    targetUid: '', referenceId: newUser.uid, readBy: [],
+                    createdBy: 'system', createdByName: 'System',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                });
+                markAutogenRunToday(newUser.uid, 'welcome_' + newUser.uid);
+            } catch (e) { console.warn('welcome gen:', e.message); }
+        }
+
+        async function createReplyAndMentionNotifications({ noteUid, noteOwnerUid, noteOwnerName, noteText, parentCommentId, parentCommentAuthorUid, parentCommentAuthorName, replierUid, replierName, replyText, isReplyToComment, mentionedUids }) {
+            try {
+                const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+                const queued = new Set();
+                const notifications = [];
+                const replySnippet = (replyText || '').slice(0, 80) + ((replyText || '').length > 80 ? '...' : '');
+                const noteSnippet = (noteText || '').slice(0, 60) + ((noteText || '').length > 60 ? '...' : '');
+
+                if (!isReplyToComment && noteOwnerUid && noteOwnerUid !== replierUid) {
+                    if (!queued.has(noteOwnerUid)) {
+                        queued.add(noteOwnerUid);
+                        notifications.push({
+                            type: 'reply', title: `💬 ${replierName} replied to your note`,
+                            message: `"${noteSnippet}"\n\n"${replySnippet}"`,
+                            icon: '💬', priority: 'info',
+                            link: 'index.html#members-section', linkLabel: 'View Reply',
+                            targetUid: noteOwnerUid, referenceId: noteUid, readBy: [],
+                            createdBy: 'system', createdByName: 'System',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(), expiresAt
+                        });
+                    }
+                }
+
+                if (isReplyToComment && parentCommentAuthorUid && parentCommentAuthorUid !== replierUid) {
+                    if (!queued.has(parentCommentAuthorUid)) {
+                        queued.add(parentCommentAuthorUid);
+                        notifications.push({
+                            type: 'reply', title: `💬 ${replierName} replied to your reply`,
+                            message: `On ${noteOwnerName}'s note: "${noteSnippet}"\n\n"${replySnippet}"`,
+                            icon: '💬', priority: 'info',
+                            link: 'index.html#members-section', linkLabel: 'View Reply',
+                            targetUid: parentCommentAuthorUid, referenceId: noteUid, readBy: [],
+                            createdBy: 'system', createdByName: 'System',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(), expiresAt
+                        });
+                    }
+                }
+
+                if (Array.isArray(mentionedUids) && mentionedUids.length > 0) {
+                    mentionedUids.forEach(uid => {
+                        if (!uid || uid === replierUid || queued.has(uid)) return;
+                        queued.add(uid);
+                        notifications.push({
+                            type: 'mention', title: `@ ${replierName} mentioned you`,
+                            message: `In ${noteOwnerName}'s note: "${noteSnippet}"\n\n"${replySnippet}"`,
+                            icon: '📣', priority: 'info',
+                            link: 'index.html#members-section', linkLabel: 'View Mention',
+                            targetUid: uid, referenceId: noteUid, readBy: [],
+                            createdBy: 'system', createdByName: 'System',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(), expiresAt
+                        });
+                    });
+                }
+
+                if (notifications.length === 0) return;
+                const batch = db.batch();
+                notifications.forEach(n => {
+                    const ref = db.collection('announcements').doc();
+                    batch.set(ref, n);
+                });
+                await batch.commit();
+            } catch (err) { console.warn('createReplyAndMentionNotifications error:', err); }
+        }
+
+        function toggleCustomLocation() {
+            const select = document.getElementById('locationSelect');
+            const customInput = document.getElementById('customLocationInput');
+            const customField = document.getElementById('customLocation');
+            if (select.value === 'custom') customInput.classList.add('active');
+            else { customInput.classList.remove('active'); customField.value = ''; }
+        }
+
+        function getLocationValue() {
+            const select = document.getElementById('locationSelect');
+            const customInput = document.getElementById('customLocation');
+            if (select.value === 'custom') return customInput.value.trim() || 'Others';
+            return select.value;
+        }
+
+        function setLocationValue(value) {
+            const select = document.getElementById('locationSelect');
+            const customInput = document.getElementById('customLocation');
+            const options = Array.from(select.options);
+            const matchedOption = options.find(opt => opt.value === value);
+            if (matchedOption) {
+                select.value = value;
+                customInput.value = '';
+                customInput.parentElement.classList.remove('active');
+            } else if (value && value.trim() !== '') {
+                select.value = 'custom';
+                customInput.value = value;
+                customInput.parentElement.classList.add('active');
+            } else {
+                select.value = '';
+                customInput.value = '';
+                customInput.parentElement.classList.remove('active');
+            }
+        }
+
+        async function getCurrentUserProfileCached(user) {
+            const CACHE_KEY = 'timawa_me_' + user.uid;
+            try {
+                const raw = sessionStorage.getItem(CACHE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && parsed.uid === user.uid && (Date.now() - parsed.t) < USER_PROFILE_CACHE_TTL) {
+                        return parsed.data;
+                    }
+                }
+            } catch (e) {}
+            const doc = await db.collection('users').doc(user.uid).get();
+            const data = doc.data() || {};
+            try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ uid: user.uid, t: Date.now(), data })); } catch (e) {}
+            return data;
+        }
+
+        function saveCurrentUserProfileCache(uid, data) {
+            try { sessionStorage.setItem('timawa_me_' + uid, JSON.stringify({ uid, t: Date.now(), data })); } catch (e) {}
+        }
+
+        function compressImage(file, maxWidth = 400, maxHeight = 400, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_SIZE = 400;
+                        if (width > MAX_SIZE || height > MAX_SIZE) {
+                            const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
+                            width = Math.round(width * ratio);
+                            height = Math.round(height * ratio);
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        fetch(compressedDataUrl).then(res => res.blob()).then(blob => {
+                            const compressedFile = new File([blob], 'profile.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+                            resolve(compressedFile);
+                        }).catch(reject);
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        }
+
+        async function uploadToCloudinary(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+            formData.append('folder', 't-imawa/profiles');
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`);
+                xhr.upload.onprogress = function(event) {
+                    if (event.lengthComputable) {
+                        const percent = (event.loaded / event.total) * 100;
+                        updateProgress(percent);
+                    }
+                };
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        resolve(response.secure_url);
+                    } else reject(new Error('Upload failed: ' + xhr.statusText));
+                };
+                xhr.onerror = function() { reject(new Error('Network error')); };
+                xhr.send(formData);
+            });
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) { window.location.href = 'index.html'; return; }
+            currentUser = user;
+            document.getElementById('email').value = user.email || '';
+            isOffline = !navigator.onLine;
+
+            const cachedTheme = readThemeFromStorage();
+            if (cachedTheme) {
+                selectedTheme = cachedTheme;
+                applyTheme(selectedTheme);
+            }
+            syncThemeUI();
+
+            try {
+                if (isOffline) throw new Error('Browser reports offline');
+                await loadProfile();
+            } catch (error) {
+                console.warn('⚠️ Firestore connection issue:', error);
+                isOffline = true;
+                loadFallbackProfile(user);
+                showMessage('⚠️ Using offline mode. Please check your connection.', 'error');
+            }
+
+            loadAnnouncements(user);
+            runAutoGeneration(user, profileData || {});
+
+            if (profileData?.createdAt) {
+                try {
+                    const created = profileData.createdAt.seconds
+                        ? new Date(profileData.createdAt.seconds * 1000)
+                        : new Date(profileData.createdAt);
+                    const ageMin = (Date.now() - created.getTime()) / 60000;
+                    if (ageMin < 5) autoGenerateMemberAnnouncement(user, profileData);
+                } catch (e) {}
+            }
+        });
+
+        window.addEventListener('online', () => {
+            isOffline = false;
+            showMessage('✅ Back online!', 'success');
+            setTimeout(() => { document.getElementById('message').style.display = 'none'; }, 3000);
+        });
+
+        window.addEventListener('offline', () => {
+            isOffline = true;
+            showMessage('⚠️ You are offline. Changes cannot be saved.', 'error');
+        });
+
+        async function loadProfile() {
+            try {
+                profileData = await getCurrentUserProfileCached(currentUser);
+                if (profileData && Object.keys(profileData).length > 0) {
+                    const displayName = profileData.displayName || currentUser.displayName || 'User';
+                    document.getElementById('displayName').value = displayName;
+                    document.getElementById('heroName').textContent = displayName;
+                    document.getElementById('heroNameDisplay').textContent = displayName;
+                    const bio = profileData.bio || 'Update your bio to tell the squad about yourself!';
+                    document.getElementById('bio').value = profileData.bio || '';
+                    document.getElementById('heroBio').textContent = bio;
+                    setLocationValue(profileData.location || '');
+                    document.getElementById('birthday').value = profileData.birthday || '';
+                    document.getElementById('occupation').value = profileData.occupation || '';
+                    if (profileData.occupation) document.getElementById('heroRole').textContent = '💼 ' + profileData.occupation;
+                    else document.getElementById('heroRole').textContent = '🌟 Community Member';
+                    document.getElementById('interests').value = profileData.interests || '';
+                    document.getElementById('status').value = profileData.status || 'available';
+                    updateStatusBadge(profileData.status || 'available');
+                    document.getElementById('loveLife').value = profileData.loveLife || '';
+                    updateLoveLifeBadge(profileData.loveLife || '');
+                    document.getElementById('instagram').value = profileData.instagram || '';
+                    document.getElementById('twitter').value = profileData.twitter || '';
+                    document.getElementById('tiktok').value = profileData.tiktok || '';
+                    document.getElementById('facebook').value = profileData.facebook || '';
+
+                    if (profileData.theme && THEMES[profileData.theme.preset]) {
+                        selectedTheme = {
+                            preset: profileData.theme.preset,
+                            mode: profileData.theme.mode === 'dark' ? 'dark' : 'light'
+                        };
+                        applyTheme(selectedTheme);
+                        persistThemeLocally(selectedTheme);
+                    }
+                    syncThemeUI();
+
+                    if (profileData.photoURL) {
+                        const avatarEl = document.getElementById('heroAvatar');
+                        avatarEl.innerHTML = `<img src="${profileData.photoURL}" alt="Profile Photo" /><label class="photo-upload-btn-overlay"><i class="fas fa-camera"></i><input type="file" id="photoInput" accept="image/*" /></label>`;
+                        document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+                    }
+                } else {
+                    const displayName = currentUser.displayName || currentUser.email || 'User';
+                    document.getElementById('displayName').value = displayName;
+                    document.getElementById('heroName').textContent = displayName;
+                    document.getElementById('heroNameDisplay').textContent = displayName;
+                    document.getElementById('heroBio').textContent = 'Welcome to TIMAWA! Update your profile.';
+                    document.getElementById('status').value = 'available';
+                    updateStatusBadge('available');
+                    updateLoveLifeBadge('');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                loadFallbackProfile(currentUser);
+            }
+        }
+
+        function loadFallbackProfile(user) {
+            const displayName = user.displayName || user.email || 'User';
+            document.getElementById('displayName').value = displayName;
+            document.getElementById('heroName').textContent = displayName;
+            document.getElementById('heroNameDisplay').textContent = displayName;
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('heroBio').textContent = 'Welcome to TIMAWA! Update your profile.';
+            document.getElementById('heroRole').textContent = '🌟 Community Member';
+            document.getElementById('status').value = 'available';
+            updateStatusBadge('available');
+            updateLoveLifeBadge('');
+        }
+
+        function resetForm() {
+            if (profileData) {
+                document.getElementById('displayName').value = profileData.displayName || currentUser.displayName || '';
+                document.getElementById('bio').value = profileData.bio || '';
+                setLocationValue(profileData.location || '');
+                document.getElementById('birthday').value = profileData.birthday || '';
+                document.getElementById('occupation').value = profileData.occupation || '';
+                document.getElementById('interests').value = profileData.interests || '';
+                document.getElementById('status').value = profileData.status || 'available';
+                document.getElementById('loveLife').value = profileData.loveLife || '';
+                document.getElementById('instagram').value = profileData.instagram || '';
+                document.getElementById('twitter').value = profileData.twitter || '';
+                document.getElementById('tiktok').value = profileData.tiktok || '';
+                document.getElementById('facebook').value = profileData.facebook || '';
+
+                if (profileData.theme && THEMES[profileData.theme.preset]) {
+                    selectedTheme = {
+                        preset: profileData.theme.preset,
+                        mode: profileData.theme.mode === 'dark' ? 'dark' : 'light'
+                    };
+                } else selectedTheme = { ...DEFAULT_THEME };
+                applyTheme(selectedTheme);
+                syncThemeUI();
+
+                if (profileData.photoURL) {
+                    const avatarEl = document.getElementById('heroAvatar');
+                    avatarEl.innerHTML = `<img src="${profileData.photoURL}" alt="Profile Photo" /><label class="photo-upload-btn-overlay"><i class="fas fa-camera"></i><input type="file" id="photoInput" accept="image/*" /></label>`;
+                    document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+                }
+                updateLoveLifeBadge(profileData.loveLife || '');
+                selectedFile = null;
+                showMessage('Form reset to saved values', 'info');
+                setTimeout(() => { document.getElementById('message').style.display = 'none'; }, 2000);
+            }
+        }
+
+        function updateStatusBadge(status) {
+            const badge = document.getElementById('heroStatus');
+            const statusMap = {
+                'available': { class: 'available', icon: 'fa-circle', label: 'Available' },
+                'busy': { class: 'busy', icon: 'fa-circle', label: 'Busy' },
+                'away': { class: 'away', icon: 'fa-circle', label: 'Away' },
+                'dnd': { class: 'dnd', icon: 'fa-circle', label: 'Do Not Disturb' }
+            };
+            const info = statusMap[status] || statusMap['available'];
+            badge.className = `status-badge ${info.class}`;
+            badge.innerHTML = `<i class="fas ${info.icon}"></i> ${info.label}`;
+        }
+
+        function updateLoveLifeBadge(value) {
+            const badge = document.getElementById('heroLoveLife');
+            const map = {
+                'Single': { cls: 'single', icon: 'fa-heart-broken', label: 'Single' },
+                'MU': { cls: 'mu', icon: 'fa-heart', label: 'MU' },
+                'Married': { cls: 'married', icon: 'fa-ring', label: 'Married' }
+            };
+            const info = map[value];
+            if (!info) { badge.style.display = 'none'; return; }
+            badge.className = `lovelife-badge ${info.cls}`;
+            badge.innerHTML = `<i class="fas ${info.icon}"></i> ${info.label}`;
+            badge.style.display = 'inline-flex';
+        }
+
+        async function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('⚠️ Photo too large! Please choose an image under 10MB.', 'error');
+                return;
+            }
+            showMessage('📸 Compressing image...', 'info');
+            try {
+                const compressedFile = await compressImage(file, 400, 400, 0.7);
+                selectedFile = compressedFile;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const avatarEl = document.getElementById('heroAvatar');
+                    avatarEl.innerHTML = `<img src="${event.target.result}" alt="Profile Photo" /><label class="photo-upload-btn-overlay"><i class="fas fa-camera"></i><input type="file" id="photoInput" accept="image/*" /></label>`;
+                    document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+                    document.getElementById('message').style.display = 'none';
+                    showMessage(`✅ Photo compressed (${Math.round(compressedFile.size / 1024)}KB). Click Save to upload.`, 'success');
+                    setTimeout(() => { document.getElementById('message').style.display = 'none'; }, 3000);
+                };
+                reader.readAsDataURL(compressedFile);
+            } catch (error) {
+                console.error('Compression error:', error);
+                showMessage('❌ Error compressing image: ' + error.message, 'error');
+            }
+        }
+
+        document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+
+        function updateProgress(percent) {
+            const container = document.getElementById('progressContainer');
+            const bar = document.getElementById('progressBar');
+            const text = document.getElementById('progressText');
+            container.classList.add('active');
+            text.classList.add('active');
+            bar.style.width = percent + '%';
+            text.textContent = `Uploading: ${Math.round(percent)}%`;
+            if (percent >= 100) {
+                setTimeout(() => {
+                    container.classList.remove('active');
+                    text.classList.remove('active');
+                }, 1000);
+            }
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (isOffline) {
+                showMessage('❌ Cannot save while offline. Please check your connection.', 'error');
+                return;
+            }
+
+            const displayName = document.getElementById('displayName').value.trim();
+            const bio = document.getElementById('bio').value.trim();
+            const location = getLocationValue();
+            const birthday = document.getElementById('birthday').value;
+            const occupation = document.getElementById('occupation').value.trim();
+            const interests = document.getElementById('interests').value.trim();
+            const status = document.getElementById('status').value;
+            const loveLife = document.getElementById('loveLife').value;
+            const instagram = document.getElementById('instagram').value.trim();
+            const twitter = document.getElementById('twitter').value.trim();
+            const tiktok = document.getElementById('tiktok').value.trim();
+            const facebook = document.getElementById('facebook').value.trim();
+
+            const existing = profileData || {};
+            const existingName = existing.displayName || currentUser.displayName || '';
+            const existingBio = existing.bio || '';
+            const existingLocation = existing.location || '';
+            const existingBirthday = existing.birthday || '';
+            const existingOccupation = existing.occupation || '';
+            const existingInterests = existing.interests || '';
+            const existingStatus = existing.status || 'available';
+            const existingLoveLife = existing.loveLife || '';
+            const existingInstagram = existing.instagram || '';
+            const existingTwitter = existing.twitter || '';
+            const existingTiktok = existing.tiktok || '';
+            const existingFacebook = existing.facebook || '';
+
+            const existingTheme = existing.theme || DEFAULT_THEME;
+            const themeChanged = existingTheme.preset !== selectedTheme.preset || existingTheme.mode !== selectedTheme.mode;
+            const hasPhotoChange = !!selectedFile;
+
+            const hasChanges =
+                displayName !== existingName || bio !== existingBio || location !== existingLocation ||
+                birthday !== existingBirthday || occupation !== existingOccupation || interests !== existingInterests ||
+                status !== existingStatus || loveLife !== existingLoveLife || instagram !== existingInstagram ||
+                twitter !== existingTwitter || tiktok !== existingTiktok || facebook !== existingFacebook ||
+                hasPhotoChange || themeChanged;
+
+            if (!hasChanges) {
+                showSaveConfirmModal({
+                    title: 'No Changes Made',
+                    message: 'You haven\'t changed any information. Your profile is already up to date.',
+                    type: 'info'
+                });
+                return;
+            }
+
+            if (facebook && !facebook.match(/^https?:\/\/(www\.)?facebook\.com\/.+/i)) {
+                showMessage('⚠️ Please enter a valid Facebook URL (e.g., https://facebook.com/username)', 'error');
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner"></span> Saving...';
+            showMessage('Saving profile...', 'info');
+
+            try {
+                let photoURL = null;
+                if (selectedFile) {
+                    try {
+                        showMessage('📤 Uploading to Cloudinary...', 'info');
+                        photoURL = await uploadToCloudinary(selectedFile);
+                        setTimeout(() => {
+                            document.getElementById('progressContainer').classList.remove('active');
+                            document.getElementById('progressText').classList.remove('active');
+                        }, 500);
+                    } catch (uploadError) {
+                        console.error('Upload error:', uploadError);
+                        showMessage('❌ Error uploading photo: ' + uploadError.message, 'error');
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
+                        return;
+                    }
+                }
+
+                const updateData = {
+                    displayName: displayName || currentUser.displayName || 'User',
+                    bio, location, birthday, occupation, interests,
+                    status, loveLife: loveLife || '',
+                    instagram, twitter, tiktok, facebook,
+                    theme: { preset: selectedTheme.preset, mode: selectedTheme.mode },
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                if (photoURL) updateData.photoURL = photoURL;
+
+                await db.collection('users').doc(currentUser.uid).set(updateData, { merge: true });
+                const mergedData = { ...(profileData || {}), ...updateData };
+                saveCurrentUserProfileCache(currentUser.uid, mergedData);
+
+                persistThemeLocally(selectedTheme);
+                broadcastThemeChange(selectedTheme);
+
+                if (displayName && displayName !== currentUser.displayName) {
+                    try { await currentUser.updateProfile({ displayName: displayName }); } catch (authError) {}
+                }
+
+                document.getElementById('heroName').textContent = displayName || currentUser.displayName || 'User';
+                document.getElementById('heroNameDisplay').textContent = displayName || currentUser.displayName || 'User';
+                document.getElementById('heroBio').textContent = bio || 'Update your bio to tell the squad about yourself!';
+                if (occupation) document.getElementById('heroRole').textContent = '💼 ' + occupation;
+                else document.getElementById('heroRole').textContent = '🌟 Community Member';
+                updateStatusBadge(status);
+                updateLoveLifeBadge(loveLife);
+
+                profileData = mergedData;
+                selectedFile = null;
+                document.getElementById('photoInput').value = '';
+
+                showMessage('✅ Profile saved successfully!', 'success');
+                setTimeout(() => { document.getElementById('message').style.display = 'none'; }, 4000);
+
+                showSaveConfirmModal({
+                    title: 'Information Saved',
+                    message: 'Your profile information and appearance have been saved. They will appear on every page and on all your devices.',
+                    type: 'success'
+                });
+            } catch (error) {
+                console.error('Save error:', error);
+                showMessage('❌ Error saving profile: ' + error.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
+            }
+        });
+
+        document.getElementById('status').addEventListener('change', function() { updateStatusBadge(this.value); });
+        document.getElementById('loveLife').addEventListener('change', function() { updateLoveLifeBadge(this.value); });
+
+        function showMessage(text, type) {
+            const el = document.getElementById('message');
+            el.textContent = text;
+            el.className = `message ${type}`;
+            el.style.display = 'block';
+        }
+
+        function toggleMobileMenu() {
+            const nav = document.getElementById('navLinks');
+            nav.classList.toggle('active');
+        }
+
+        document.querySelectorAll('.nav-links a, .nav-links button').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('navLinks').classList.remove('active');
+            });
+        });
+
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
+            else navbar.style.boxShadow = 'none';
+        });
+
+        async function logout() {
+            try {
+                if (auth.currentUser) {
+                    try { sessionStorage.removeItem('timawa_me_' + auth.currentUser.uid); } catch (e) {}
+                }
+                await auth.signOut();
+                window.location.href = 'index.html';
+            } catch (error) { alert('Error signing out: ' + error.message); }
+        }
+
+        function anyModalOpen() {
+            return ['announcementViewModal', 'saveConfirmModal'].some(id => {
+                const el = document.getElementById(id);
+                return el && el.classList.contains('active');
+            });
+        }
+
+        window.addEventListener('click', function(event) {
+            const announcementPopup = document.getElementById('announcementPopup');
+            const announcementViewModal = document.getElementById('announcementViewModal');
+            const saveConfirmModal = document.getElementById('saveConfirmModal');
+
+            if (event.target === announcementViewModal) closeAnnouncementView();
+            if (event.target === saveConfirmModal) closeSaveConfirmModal();
+
+            if (announcementPopup && announcementPopup.classList.contains('open')) {
+                if (!announcementPopup.contains(event.target) &&
+                    !event.target.closest('#announcementBell') &&
+                    !event.target.closest('#announcementBellMobile') &&
+                    !event.target.closest('.announcement-wrapper') &&
+                    !event.target.closest('.navbar-mobile-bell')) {
+                    closeAnnouncementPopup();
+                }
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const saveModal = document.getElementById('saveConfirmModal');
+                const viewModal = document.getElementById('announcementViewModal');
+                const popup = document.getElementById('announcementPopup');
+                if (saveModal && saveModal.classList.contains('active')) closeSaveConfirmModal();
+                else if (viewModal && viewModal.classList.contains('active')) closeAnnouncementView();
+                else if (popup && popup.classList.contains('open')) closeAnnouncementPopup();
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            const popup = document.getElementById('announcementPopup');
+            if (popup && popup.classList.contains('open')) {
+                const isMobileNow = window.innerWidth <= 768;
+                const anchor = isMobileNow
+                    ? document.getElementById('announcementBellMobile')
+                    : document.getElementById('announcementBell');
+                positionAnnouncementPopup(anchor);
+            }
+        });
+
+        // ★ INIT: apply cached theme (which injects the correct shapes) ASAP
+        (function() {
+            const cached = readThemeFromStorage();
+            if (cached) {
+                selectedTheme = cached;
+                applyTheme(selectedTheme);
+            } else {
+                // Even without a cached theme, inject default shapes
+                injectThemeShapes(selectedTheme.preset);
+            }
+        })();
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', syncThemeUI);
+        } else syncThemeUI();
+    </script>
+
+    <script src="idle-logout.js"></script>
+    <script src="visit-tracker.js"></script>
+</body>
+</html>
